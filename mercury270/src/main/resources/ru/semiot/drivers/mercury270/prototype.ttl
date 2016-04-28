@@ -1,0 +1,29 @@
+@prefix : <https://raw.githubusercontent.com/semiotproject/semiot-drivers/master/mercury270/src/main/resources/ru/semiot/drivers/mercury270/prototype.ttl#> .
+@prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#> .
+@prefix qudt: <http://qudt.org/schema/qudt#> .
+@prefix qudt-quantity: <http://qudt.org/vocab/quantity#> .
+@prefix qudt-unit: <http://qudt.org/vocab/unit#> .
+@prefix proto: <http://w3id.org/semiot/ontologies/proto#> .
+@prefix qudt-quantity-ext: <http://w3id.org/qudt/vocab/quantity/ext#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+:Mercury270 a ssn:System, proto:Prototype ;
+    rdfs:label "Mercury 270"@en ;
+    ssn:hasSubSystem :Mercury270-ElectricSensor ;
+    .
+
+:Mercury270-ElectricSensor a ssn:SensingDevice, proto:Prototype ;
+    ssn:observes qudt-quantity:ElectricCurrentPerUnitLength ;
+    ssn:hasMeasurementCapability [
+        a ssn:MeasurementCapability ;
+        ssn:forProperty qudt-quantity:ElectricCurrentPerUnitLength ;
+        ssn:hasMeasurementProperty [
+            a qudt:Unit ;
+            ssn:hasValue [
+                a qudt:Quantity ;
+                ssn:hasValue qudt-unit:WattPerHour ; #Must be checked
+            ] ; 
+        ] ;
+    ] ;
+    .
