@@ -4,7 +4,7 @@
 @prefix qudt-quantity: <http://qudt.org/vocab/quantity#> .
 @prefix qudt-unit: <http://qudt.org/vocab/unit#> .
 @prefix proto: <http://w3id.org/semiot/ontologies/proto#> .
-@prefix qudt-quantity-ext: <http://w3id.org/qudt/vocab/quantity/ext#> .
+@prefix qudt-unit-ext: <http://w3id.org/qudt/vocab/unit/ext#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
@@ -14,15 +14,15 @@
     .
 
 :Mercury270-ElectricSensor a ssn:SensingDevice, proto:Prototype ;
-    ssn:observes qudt-quantity:ElectricCurrentPerUnitLength ;
+    ssn:observes qudt-quantity:EnergyAndWork ;
     ssn:hasMeasurementCapability [
         a ssn:MeasurementCapability ;
-        ssn:forProperty qudt-quantity:ElectricCurrentPerUnitLength ;
+        ssn:forProperty qudt-quantity:EnergyAndWork ;
         ssn:hasMeasurementProperty [
             a qudt:Unit ;
             ssn:hasValue [
                 a qudt:Quantity ;
-                ssn:hasValue qudt-unit:WattPerHour ; #Must be checked
+                ssn:hasValue qudt-unit-ext:WattHour ;
             ] ; 
         ] ;
     ] ;
