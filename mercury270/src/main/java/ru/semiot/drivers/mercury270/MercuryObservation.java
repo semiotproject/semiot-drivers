@@ -1,9 +1,10 @@
 package ru.semiot.drivers.mercury270;
 
-import java.io.IOException;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;
 import ru.semiot.platform.deviceproxyservice.api.drivers.Observation;
+
+import java.io.IOException;
 
 /**
  *
@@ -24,8 +25,8 @@ public class MercuryObservation extends Observation {
     }
   }
 
-  public MercuryObservation(String deviceId, String timestamp, String value) {
-    super(deviceId, timestamp);
+  public MercuryObservation(String deviceId, String sensorId, String timestamp, String value) {
+    super(deviceId, sensorId, timestamp);
     getProperties().put(Keys.OBSERVATION_VALUE, value);
   }
 

@@ -1,11 +1,12 @@
 package ru.semiot.drivers.mercury270;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import org.eclipse.californium.core.CoapClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.semiot.platform.deviceproxyservice.api.drivers.Configuration;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  *
@@ -15,6 +16,7 @@ public class ScheduledPuller implements Runnable {
   private static final Logger logger = LoggerFactory.getLogger(ScheduledPuller.class);
   private static final int FNV_32_INIT = 0x811c9dc5;
   private static final int FNV_32_PRIME = 0x01000193;
+  public static final String SENSOR_ID_TEMPLATE = "${SYSTEM_ID}-tick";
 
   final CoapClient client;
   final DeviceDriverImpl driver;
@@ -56,7 +58,8 @@ public class ScheduledPuller implements Runnable {
     String timestamp = String.valueOf(System.currentTimeMillis());
     timestamp = timestamp.substring(0, timestamp.length() - 3);
     logger.debug("Value is {} with timestamp {}", value, timestamp);
-    MercuryObservation obs = new MercuryObservation(deviceId, timestamp, Integer.toString(value));
+    MercuryObservation obs = new MercuryObservation(deviceId,
+        SENSOR_ID_TEMPLATE.replace("${SYSTEM_ID}", deviceId), timestamp, Integer.toString(value));
 
     driver.publishNewObservation(obs);
 
