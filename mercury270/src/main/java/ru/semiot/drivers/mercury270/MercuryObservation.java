@@ -1,9 +1,10 @@
 package ru.semiot.drivers.mercury270;
 
-import java.io.IOException;
 import org.slf4j.LoggerFactory;
 import ru.semiot.platform.deviceproxyservice.api.drivers.Observation;
 import ru.semiot.platform.deviceproxyservice.api.drivers.RDFTemplate;
+
+import java.io.IOException;
 
 /**
  *

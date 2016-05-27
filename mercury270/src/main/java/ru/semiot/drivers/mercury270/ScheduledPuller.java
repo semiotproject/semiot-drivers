@@ -1,11 +1,12 @@
 package ru.semiot.drivers.mercury270;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import org.eclipse.californium.core.CoapClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.semiot.platform.deviceproxyservice.api.drivers.Configuration;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  *
