@@ -25,7 +25,7 @@ public class ScheduledPuller implements Runnable {
     this.driver = driver;
     this.configuration = config;
     client = new CoapClient();
-    String uri = configuration.get(Keys.COAP_ENDPOINT);
+    String uri = configuration.getAsString(Keys.COAP_ENDPOINT);
     logger.debug("Try to get a model from {}", (uri + Keys.DEVICE_MODEL));
     String model = client.setURI(uri + Keys.DEVICE_MODEL).get().getResponseText();
     logger.debug("Model got! It is {}", model);

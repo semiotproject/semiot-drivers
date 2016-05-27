@@ -164,8 +164,8 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
 
   private Configuration getRepeatableConfiguration(int count, Configuration cfg)
       throws ConfigurationException {
-    String uri = cfg.get(count + "." + Keys.COAP_ENDPOINT);
-    String pulling_interval = cfg.get(count + "." + Keys.PULLING_INTERVAL);
+    String uri = cfg.getAsString(count + "." + Keys.COAP_ENDPOINT);
+    String pulling_interval = cfg.getAsString(count + "." + Keys.PULLING_INTERVAL);
     if (uri == null || pulling_interval == null) {
       logger.error("Bad repeatable configuration! Some field is null! {} is {}, {} is {}",
           count + "." + Keys.COAP_ENDPOINT, uri, count + "." + Keys.PULLING_INTERVAL,
