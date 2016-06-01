@@ -1,0 +1,10 @@
+ru\semiot\platform\drivers\netatmo\weatherstation\ScheduledPuller.class
+ru\semiot\platform\drivers\netatmo\weatherstation\WeatherStationFactory.class
+ru\semiot\platform\drivers\netatmo\weatherstation\Keys.class
+ru\semiot\platform\drivers\netatmo\weatherstation\WeatherStationObservation.class
+ru\semiot\platform\drivers\netatmo\weatherstation\NetatmoDeviceProperties.class
+ru\semiot\platform\drivers\netatmo\weatherstation\DeviceDriverImpl.class
+ru\semiot\platform\drivers\netatmo\weatherstation\JSONUtils.class
+ru\semiot\platform\drivers\netatmo\weatherstation\NetatmoAPI.class
+ru\semiot\platform\drivers\netatmo\weatherstation\Activator.class
+ru\semiot\platform\drivers\netatmo\weatherstation\WeatherStation.class
