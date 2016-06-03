@@ -9,7 +9,7 @@
 @prefix proto: <http://w3id.org/semiot/ontologies/proto#> .
 @prefix semiot: <http://w3id.org/semiot/ontologies/semiot#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
-@prefix : <https://raw.githubusercontent.com/semiotproject/semiot-platform/release-1.0.7/device-proxy-service-drivers/mock-plain-lamp/src/main/resources/ru/semiot/drivers/mocks/plainlamp/prototype.ttl#> .
+@prefix : <https://raw.githubusercontent.com/semiotproject/semiot-drivers/mock-plain-lamp/src/main/resources/ru/semiot/drivers/mocks/plainlamp/prototype.ttl#> .
 
 [ a semiot:Command, semiot:StartCommand ;
   semiot:forProcess <https://localhost/systems/.../processes/light> ;
