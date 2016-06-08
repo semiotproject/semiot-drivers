@@ -1,0 +1,47 @@
+@prefix : <https://raw.githubusercontent.com/semiotproject/semiot-drivers/master/temperature-simulator/src/main/resources/ru/semiot/drivers/temperature/simulator/prototype.ttl#> .
+@prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#> .
+@prefix qudt: <http://qudt.org/schema/qudt#> .
+@prefix qudt-quantity: <http://qudt.org/vocab/quantity#> .
+@prefix qudt-unit: <http://qudt.org/vocab/unit#> .
+@prefix proto: <http://w3id.org/semiot/ontologies/proto#> .
+@prefix qudt-quantity-ext: <http://w3id.org/qudt/vocab/quantity/ext#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dogont: <http://elite.polito.it/ontologies/dogont.owl#> .
+@prefix semiot: <http://w3id.org/semiot/ontologies/semiot#> .
+
+:SmartBuilding a dogont:Building, proto:Prototype ;
+    rdfs:label "Smart Building"@en ;
+    dogont:contains :SmartFlat;
+.
+
+:SmartFlat a dogont:Flat, proto:Prototype ;
+    rdfs:label "Smart Flat"@en ;
+.    
+
+:TemperatureDevice a ssn:System, proto:Prototype ;
+    rdfs:label "Temperature Simulator"@en ;
+    ssn:hasSubSystem :NetatmoWeatherStationOutdoorModule-TemperatureSensor ;    
+    semiot:supportedProcess :NetatmoWeatherStationOutdoorModule-Sense-Temperature ;
+    dogont:isIn :SmartFlat ;
+    .
+
+:TemperatureDevice-Sense-Temperature a semiot:SensingProcess ;
+    semiot:triggers [ a ssn:Sensing ;
+        ssn:implementedBy :NetatmoWeatherStationOutdoorModule-TemperatureSensor ;
+    ] .
+
+:TemperatureDevice-TemperatureSensor a ssn:SensingDevice, proto:Prototype ;
+    ssn:observes qudt-quantity:ThermodynamicTemperature ;
+    ssn:hasMeasurementCapability [
+        a ssn:MeasurementCapability ;
+        ssn:forProperty qudt-quantity:ThermodynamicTemperature ;
+        ssn:hasMeasurementProperty [
+            a qudt:Unit ;
+            ssn:hasValue [
+                a qudt:Quantity ;
+                ssn:hasValue qudt-unit:DegreeCelsius ;
+            ] ; 
+        ] ;
+    ] ;
+    .
