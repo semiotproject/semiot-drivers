@@ -10,20 +10,10 @@
 @prefix dogont: <http://elite.polito.it/ontologies/dogont.owl#> .
 @prefix semiot: <http://w3id.org/semiot/ontologies/semiot#> .
 
-:SmartBuilding a dogont:Building, proto:Prototype ;
-    rdfs:label "Smart Building"@en ;
-    dogont:contains :SmartFlat;
-.
-
-:SmartFlat a dogont:Flat, proto:Prototype ;
-    rdfs:label "Smart Flat"@en ;
-.    
-
 :TemperatureDevice a ssn:System, proto:Prototype ;
     rdfs:label "Temperature Simulator"@en ;
     ssn:hasSubSystem :NetatmoWeatherStationOutdoorModule-TemperatureSensor ;    
-    semiot:supportedProcess :NetatmoWeatherStationOutdoorModule-Sense-Temperature ;
-    dogont:isIn :SmartFlat ;
+    semiot:supportedProcess :NetatmoWeatherStationOutdoorModule-Sense-Temperature ;    
     .
 
 :TemperatureDevice-Sense-Temperature a semiot:SensingProcess ;

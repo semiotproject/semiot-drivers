@@ -9,6 +9,7 @@ import java.util.Map;
 import org.json.JSONArray;
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapHandler;
+import org.eclipse.californium.core.CoapObserveRelation;
 import org.eclipse.californium.core.CoapResponse;
 import org.json.JSONException;
 import org.osgi.service.cm.ConfigurationException;
@@ -41,6 +42,7 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
   private Configuration commonConfiguration;
   private CoapClient client;
   private final Map<String, Device> devicesMap = Collections.synchronizedMap(new HashMap<>());
+  CoapObserveRelation relation;
 
   public void start() {
     logger.debug("{} is starting!", DRIVER_NAME);
@@ -69,7 +71,8 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
     client.setURI(commonConfiguration.getAsString(Keys.COAP_ENDPOINT)
         + Keys.SIMULATOR_OBSERVATION_POSTFIX);
     logger.debug("Subscribe for new observations");
-    client.observe(new CoapHandler() {
+
+    relation = client.observe(new CoapHandler() {
       @Override
       public void onLoad(CoapResponse response) {
         try {
@@ -93,7 +96,8 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
   public void stop() {
     logger.debug("{} is stopping!", DRIVER_NAME);
     logger.debug("Try to shutdown CoapClient");
-    client.shutdown();
+    relation.reactiveCancel();
+    //client.shutdown();
     devicesMap.clear();
     logger.info("{} stoped!", DRIVER_NAME);
   }

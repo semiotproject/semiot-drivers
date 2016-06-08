@@ -47,8 +47,9 @@ public class Regulator extends Device {
     client.shutdown();
   }
 
-  public Regulator(String id, String uri) {
+  public Regulator(String id, String uri, String building_id) {
     super(id);
+    getProperties().put(Keys.BUILDING_ID, building_id);
     client = new CoapClient(uri);
     try {
       this.pressure = Double.parseDouble(client.get().getResponseText());

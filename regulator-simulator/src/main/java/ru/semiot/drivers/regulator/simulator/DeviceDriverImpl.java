@@ -6,7 +6,9 @@ import java.time.ZonedDateTime;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import org.eclipse.californium.core.CoapClient;
+import org.eclipse.californium.core.WebLink;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
 import org.slf4j.Logger;
@@ -39,7 +41,8 @@ public class DeviceDriverImpl implements ControllableDeviceDriver, ManagedServic
   private static final String PROCESS_CHANGE = "pressure";
   private static final String COMMAND_CHANGE_VALUE = "change-regulator_value";
   private static RDFTemplate TEMPLATE_COMMAND_CHANGE_VALUE;
-  private static final String DEVICE_ID = "111122223333";
+  private static final int FNV_32_INIT = 0x811c9dc5;
+  private static final int FNV_32_PRIME = 0x01000193;
 
   static {
     try {
@@ -57,10 +60,23 @@ public class DeviceDriverImpl implements ControllableDeviceDriver, ManagedServic
   public void start() {
     logger.debug("{} is starting!", DRIVER_NAME);
     manager.registerDriver(info);
-    Regulator reg = new Regulator(DEVICE_ID,
-        commonConfiguration.getAsString(Keys.COAP_ENDPOINT) + Keys.COAP_RESOURCE);
-    regulators.put(DEVICE_ID, reg);
-    manager.registerDevice(info, reg);
+
+    Set<WebLink> discover = new CoapClient(commonConfiguration.getAsString(Keys.COAP_ENDPOINT))
+        .discover();
+    String building;
+    Regulator reg;
+    String uriPrefix = commonConfiguration.getAsString(Keys.COAP_ENDPOINT) + Keys.COAP_RESOURCE + '/';
+    String id;
+    for (WebLink link : discover) {
+      if (link.getURI().contains("regulator/")) {
+        building = link.getURI().substring(link.getURI().lastIndexOf('/') + 1);
+        id = hash(Keys.DRIVER_PID, building);
+        reg = new Regulator(id, uriPrefix + building, building);
+        regulators.put(id, reg);
+        manager.registerDevice(info, reg);
+      }
+    }
+
     logger.info("{} started!", DRIVER_NAME);
   }
 
@@ -179,5 +195,17 @@ public class DeviceDriverImpl implements ControllableDeviceDriver, ManagedServic
       default:
         throw new IllegalArgumentException();
     }
+  }
+
+  private static String hash(String prefix, String id) {
+    String name = prefix + id;
+    int h = FNV_32_INIT;
+    final int len = name.length();
+    for (int i = 0; i < len; i++) {
+      h ^= name.charAt(i);
+      h *= FNV_32_PRIME;
+    }
+    long longHash = h & 0xffffffffl;
+    return String.valueOf(longHash);
   }
 }

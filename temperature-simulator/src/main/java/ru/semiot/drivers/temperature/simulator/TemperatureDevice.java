@@ -22,12 +22,9 @@ public class TemperatureDevice extends Device {
     }
   }
 
-  public TemperatureDevice(String id, String building_num, String flat_num, String building_id, String flat_id) {
+  public TemperatureDevice(String id, String building_num) {
     super(id);
-    getProperties().put(Keys.BUILDING, building_num);
-    getProperties().put(Keys.FLAT, flat_num);
-    getProperties().put(Keys.BUILDING_ID, building_id);
-    getProperties().put(Keys.FLAT_ID, flat_id);
+    getProperties().put(Keys.BUILDING_ID, building_num);
   }
 
   @Override
