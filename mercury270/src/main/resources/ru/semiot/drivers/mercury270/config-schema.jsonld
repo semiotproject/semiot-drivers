@@ -11,12 +11,12 @@
     "semiot:view": [
         {
             "@type": "semiot:RepeatableSchema",
-            "ru.semiot.COAPEndpoint": {
+            "ru.semiot.drivers.COAPEndpoint": {
                 "@type": "xsd:anyURI",
                 "rdfs:label": "COAP Endpoint",
                 "dtype:defaultValue": "coap://77.234.203.218:5683"
             },
-            "ru.semiot.pullingInterval": {
+            "ru.semiot.drivers.pullingInterval": {
                 "@type": "xsd:integer",
                 "rdfs:label": "The pulling interval",
                 "dtype:defaultValue": 10

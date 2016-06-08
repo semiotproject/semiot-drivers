@@ -6,8 +6,8 @@ package ru.semiot.drivers.mercury270;
  */
 public interface Keys {
   public static final String DRIVER_PID = "ru.semiot.drivers.mercury270";
-  public static final String COAP_ENDPOINT = "ru.semiot.COAPEndpoint";
-  public static final String PULLING_INTERVAL = "ru.semiot.pullingInterval";
+  public static final String COAP_ENDPOINT = "ru.semiot.drivers.COAPEndpoint";
+  public static final String PULLING_INTERVAL = "ru.semiot.drivers.pullingInterval";
 
   public static final String DEVICE_TICK = "/tick";
   public static final String DEVICE_MAC = "/mac";
