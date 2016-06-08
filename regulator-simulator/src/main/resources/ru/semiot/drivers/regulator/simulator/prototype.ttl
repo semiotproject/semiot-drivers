@@ -1,0 +1,56 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#> .
+@prefix dul: <http://www.loa-cnr.it/ontologies/DUL.owl#> .
+@prefix qudt-quantity: <http://qudt.org/vocab/quantity#> .
+@prefix qudt-quantity-ext: <http://w3id.org/qudt/vocab/quantity/ext#> .
+@prefix qudt-unit: <http://qudt.org/vocab/unit#> .
+@prefix semiot: <http://w3id.org/semiot/ontologies/semiot#> .
+@prefix proto: <http://w3id.org/semiot/ontologies/proto#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix : <https://raw.githubusercontent.com/semiotproject/semiot-drivers/master/regulator-simulator/src/main/resources/ru/semiot/drivers/regulator/simulator/prototype.ttl#> .
+
+:Regulator a ssn:System, proto:Prototype ;
+  rdfs:label "A stupid regulator"^^xsd:string ;
+  ssn:hasSubSystem :Regulator-Actuator ;
+  semiot:supportedProcess :Regulator-ChangeValue .
+
+:Regulator-ChangeValue a semiot:Process, semiot:ActuationProcess ;  
+  semiot:supportedCommand [
+    a semiot:ChangeValueCommand ;
+    dcterms:identifier "change-regulator_value" ;
+    rdfs:label "Change value"@en ;
+    dul:hasParameter [ a semiot:MappingParameter, sh:Shape ;
+      sh:property [
+        sh:name "Pressure"@en ;
+        sh:datatype xsd:double ;
+        sh:defaultValue "3"^^xsd:double ;
+        sh:predicate dul:hasParameterDataValue ;
+      ] ;
+      semiot:forParameter :Regulator-ChangeValue-Pressure;
+    ]      
+  ] ;
+  semiot:triggers [
+    a semiot:Actuating ;
+    ssn:implementedBy :Regulator-Actuator ;
+  ] ;
+  dul:hasParameter :Regulator-ChangeValue-Pressure .
+
+:Regulator-ChangeValue-Pressure a semiot:PropertyMappingParameter ;
+  dul:associatedWith :Regulator-Actuator ;
+  ssn:forProperty qudt-quantity:DimensionlessRatio .
+
+:Regulator-Actuator a semiot:ActuatingDevice, proto:Prototype ;
+  semiot:actsOn qudt-quantity:DimensionlessRatio ;
+  semiot:hasActuatingCapability [
+    a semiot:ActuatingCapability ;
+    ssn:forProperty qudt-quantity:ForcePerArea ;
+    semiot:hasActuatingProperty [
+      a semiot:ActuatingProperty, semiot:ActuatingValueRange ;
+      dul:hasDataValue "0"^^xsd:double ;
+      dul:hasDataValue "100"^^xsd:double ;
+      dul:isClassifiedBy qudt-unit:Percent ;
+    ] ;
+  ] 
+.

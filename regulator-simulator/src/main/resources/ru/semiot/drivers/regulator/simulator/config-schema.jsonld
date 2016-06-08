@@ -1,0 +1,20 @@
+{
+  "@context": {
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "dtype": "http://www.linkedmodel.org/schema/dtype#",
+    "semiot": "http://w3id.org/semiot/ontologies/semiot#"
+  },
+  "@type": "semiot:DriverConfigurationSchema",
+  "semiot:driverPid": "ru.semiot.drivers.regulator-simulator",
+  "semiot:view": [
+    {
+      "@type": "semiot:CommonSchema",
+      "ru.semiot.drivers.COAPEndpoint": {
+        "@type": "xsd:anyURI",
+        "rdfs:label": "COAP Endpoint",
+        "dtype:defaultValue": "coap://winghouse.semiot.ru:5683"
+      }
+    }
+  ]
+}
