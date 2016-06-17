@@ -64,19 +64,29 @@ public class DeviceDriverImpl implements ControllableDeviceDriver, ManagedServic
     Set<WebLink> discover = new CoapClient(commonConfiguration.getAsString(Keys.COAP_ENDPOINT))
         .discover();
     String building;
-    Regulator reg;
     String uriPrefix = commonConfiguration.getAsString(Keys.COAP_ENDPOINT) + Keys.COAP_RESOURCE + '/';
     String id;
     for (WebLink link : discover) {
       if (link.getURI().contains("regulator/")) {
         building = link.getURI().substring(link.getURI().lastIndexOf('/') + 1);
         id = hash(Keys.DRIVER_PID, building);
-        reg = new Regulator(id, uriPrefix + building, building);
+        Regulator reg = new Regulator(id, uriPrefix + building, building);
         regulators.put(id, reg);
         manager.registerDevice(info, reg);
+
       }
     }
 
+    for (String _id : regulators.keySet()) {
+      Command cmd = new Command(PROCESS_CHANGE, COMMAND_CHANGE_VALUE);
+      cmd.add(Keys.PROCESS_ID, PROCESS_CHANGE);
+      cmd.add(Keys.DEVICE_ID, regulators.get(_id).getId());
+      cmd.add(Keys.PROCESS_CHANGE_REGULATOR_PRESSURE, regulators.get(_id).getPressure());
+      manager.registerCommand(regulators.get(_id), new CommandResult(
+          cmd,
+          getRDFTemplate(COMMAND_CHANGE_VALUE),
+          ZonedDateTime.now()));
+    }
     logger.info("{} started!", DRIVER_NAME);
   }
 

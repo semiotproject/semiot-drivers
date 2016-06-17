@@ -67,8 +67,9 @@ public class DriverUtils {
         JSONObject object = observations.getJSONObject(i);
         String id = hash(Keys.DRIVER_PID, Integer.toString(object.getInt(SENSOR_ID)));
         String value = Double.toString(object.getDouble(VALUE));
-        String timestamp = Long.toString(object.getLong(TIMESTAMP));
-        timestamp = timestamp.substring(0, timestamp.length() - 3);
+        //Using driver timestamp
+        String timestamp = Long.toString(System.currentTimeMillis());
+        //String timestamp = Long.toString(object.getLong(TIMESTAMP));
         obs.add(new TemperatureObservation(id, timestamp, value));
       } catch (JSONException ex) {
         logger.warn("Can't read data from observations, bad json! Exception message is {}", ex.getMessage());
