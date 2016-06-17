@@ -124,7 +124,6 @@ public class WeatherStationFactory {
     String timestamp = null;
     if (appendCurTimestamp) {
       timestamp = String.valueOf(System.currentTimeMillis());
-      timestamp = timestamp.substring(0, timestamp.length() - 3);
     }
 
     for (int i = 0; i < devices.length(); i++) {
