@@ -2,11 +2,14 @@ package ru.semiot.drivers.temperature.simulator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.semiot.platform.deviceproxyservice.api.drivers.Device;
+import ru.semiot.platform.deviceproxyservice.api.drivers.DeviceDriverManager;
 
 /**
  *
@@ -62,13 +65,13 @@ public class DriverUtils {
 
   public static List<TemperatureObservation> getObservations(JSONArray observations) {
     List<TemperatureObservation> obs = new ArrayList<>();
+    String timestamp = Long.toString(System.currentTimeMillis());
     for (int i = 0; i < observations.length(); i++) {
       try {
         JSONObject object = observations.getJSONObject(i);
         String id = hash(Keys.DRIVER_PID, Integer.toString(object.getInt(SENSOR_ID)));
         String value = Double.toString(object.getDouble(VALUE));
         //Using driver timestamp
-        String timestamp = Long.toString(System.currentTimeMillis());
         //String timestamp = Long.toString(object.getLong(TIMESTAMP));
         obs.add(new TemperatureObservation(id, timestamp, value));
       } catch (JSONException ex) {
@@ -77,5 +80,21 @@ public class DriverUtils {
     }
 
     return obs;
+  }
+
+  public static void getAndPublishObservations(JSONArray observations, DeviceDriverManager manager, Map<String, Device> map){
+
+    for (int i = 0; i < observations.length(); i++) {
+      try {
+        JSONObject object = observations.getJSONObject(i);
+        String id = hash(Keys.DRIVER_PID, Integer.toString(object.getInt(SENSOR_ID)));
+        String value = Double.toString(object.getDouble(VALUE));
+        //Using driver timestamp
+        String timestamp = Long.toString(System.currentTimeMillis());
+        manager.registerObservation(map.get(id), new TemperatureObservation(id, timestamp, value));
+      } catch (JSONException ex) {
+        logger.warn("Can't read data from observations, bad json! Exception message is {}", ex.getMessage());
+      }
+    }
   }
 }

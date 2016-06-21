@@ -76,10 +76,12 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
       @Override
       public void onLoad(CoapResponse response) {
         try {
-          List<TemperatureObservation> obs = DriverUtils.getObservations(new JSONArray(response.getResponseText()));
-          for (TemperatureObservation o : obs) {
-            publishNewObservation(o);
-          }
+
+          //List<TemperatureObservation> obs = DriverUtils.getObservations(new JSONArray(response.getResponseText()));
+          //for (TemperatureObservation o : obs) {
+            //publishNewObservation(o);
+          //}
+          DriverUtils.getAndPublishObservations(new JSONArray(response.getResponseText()), manager, devicesMap);
         } catch (JSONException ex) {
           logger.error("Bad response format! Can't read observations! Exception message is {}", ex.getMessage());
         }
