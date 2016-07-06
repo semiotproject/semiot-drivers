@@ -50,9 +50,17 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
     logger.debug("Try to get descrioption of devices");
     client.setURI(commonConfiguration.getAsString(Keys.COAP_ENDPOINT)
         + Keys.SIMULATOR_DESCRIPTION_POSTFIX);
+    client.setTimeout(0);
     List<TemperatureDevice> devices;
     try {
-      devices = DriverUtils.getDevices(new JSONArray(client.get().getResponseText()));
+	  String desq = client.get().getResponseText();
+      if(desq == null){
+        logger.error("Can't get description! Exiting...");
+        stop();
+        return;
+      }
+      devices = DriverUtils.getDevices(new JSONArray(desq));
+
     } catch (JSONException ex) {
       logger.error("Bad response format! Can't read description! Exception message is {}", ex.getMessage());
       return;
@@ -101,7 +109,7 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
     relation.reactiveCancel();
     //client.shutdown();
     devicesMap.clear();
-    logger.info("{} stoped!", DRIVER_NAME);
+    logger.info("{} stopped!", DRIVER_NAME);
   }
 
   public void registerDevice(Device device) {
