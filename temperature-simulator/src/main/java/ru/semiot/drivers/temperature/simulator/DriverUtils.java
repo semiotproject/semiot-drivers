@@ -41,24 +41,21 @@ public class DriverUtils {
     return String.valueOf(longHash);
   }
 
-  public static List<TemperatureDevice> getDevices(JSONArray description) {
+  public static List<TemperatureDevice> getDevices(JSONObject building) {
     List<TemperatureDevice> devices = new ArrayList<>();
-    for (int i = 0; i < description.length(); i++) {
-      try {
-        JSONObject building = description.getJSONObject(i);
-        String building_num = Integer.toString(building.getInt(BUILDING_NUMBER));
-        JSONArray flats = building.getJSONArray(FLATS);
-        for (int q = 0; q < flats.length(); q++) {
-          JSONObject flat = flats.getJSONObject(q);
-          JSONArray sensors = flat.getJSONArray(SENSORS);
-          for (int j = 0; j < sensors.length(); j++) {
-            String sensor_id = hash(Keys.DRIVER_PID, Integer.toString(sensors.getJSONObject(j).getInt(SENSOR_ID)));
-            devices.add(new TemperatureDevice(sensor_id, building_num));
-          }
+    try {
+      String building_num = Integer.toString(building.getInt(BUILDING_NUMBER));
+      JSONArray flats = building.getJSONArray(FLATS);
+      for (int i = 0; i < flats.length(); i++) {
+        JSONObject flat = flats.getJSONObject(i);
+        JSONArray sensors = flat.getJSONArray(SENSORS);
+        for (int j = 0; j < sensors.length(); j++) {
+          String sensor_id = hash(Keys.DRIVER_PID, Integer.toString(sensors.getJSONObject(j).getInt(SENSOR_ID)));
+          devices.add(new TemperatureDevice(sensor_id, building_num));
         }
-      } catch (JSONException ex) {
-        logger.warn("Can't read data from description, bad json! Exception message is {}", ex.getMessage());
       }
+    } catch (JSONException ex) {
+      logger.warn("Can't read data from description, bad json! Exception message is {}", ex.getMessage());
     }
     return devices;
   }
@@ -82,7 +79,7 @@ public class DriverUtils {
     return obs;
   }
 
-  public static void getAndPublishObservations(JSONArray observations, DeviceDriverManager manager, Map<String, Device> map){
+  public static void getAndPublishObservations(JSONArray observations, DeviceDriverManager manager, Map<String, Device> map) {
 
     for (int i = 0; i < observations.length(); i++) {
       try {

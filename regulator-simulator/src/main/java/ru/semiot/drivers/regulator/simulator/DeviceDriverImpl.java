@@ -64,13 +64,14 @@ public class DeviceDriverImpl implements ControllableDeviceDriver, ManagedServic
     Set<WebLink> discover = new CoapClient(commonConfiguration.getAsString(Keys.COAP_ENDPOINT))
         .discover();
     String building;
-    String uriPrefix = commonConfiguration.getAsString(Keys.COAP_ENDPOINT) + Keys.COAP_RESOURCE + '/';
+    String uriPrefix = commonConfiguration.getAsString(Keys.COAP_ENDPOINT) + "/{NUM}" + Keys.COAP_RESOURCE;
     String id;
     for (WebLink link : discover) {
-      if (link.getURI().contains("regulator/")) {
-        building = link.getURI().substring(link.getURI().lastIndexOf('/') + 1);
+      logger.debug("Link is {}", link.getURI());
+      if (link.getURI().matches("/\\d+/reg")) {
+        building = link.getURI().substring(1, link.getURI().lastIndexOf('/'));
         id = hash(Keys.DRIVER_PID, building);
-        Regulator reg = new Regulator(id, uriPrefix + building, building);
+        Regulator reg = new Regulator(id, uriPrefix.replace("{NUM}", building), building);
         regulators.put(id, reg);
         manager.registerDevice(info, reg);
 
