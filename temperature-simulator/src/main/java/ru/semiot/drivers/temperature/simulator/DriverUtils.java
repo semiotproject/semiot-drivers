@@ -1,8 +1,5 @@
 package ru.semiot.drivers.temperature.simulator;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -10,6 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.semiot.platform.deviceproxyservice.api.drivers.Device;
 import ru.semiot.platform.deviceproxyservice.api.drivers.DeviceDriverManager;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -85,7 +86,8 @@ public class DriverUtils {
     for (int i = 0; i < observations.length(); i++) {
       try {
         JSONObject object = observations.getJSONObject(i);
-        String id = hash(Keys.DRIVER_PID, Integer.toString(object.getInt(SENSOR_ID)));
+        // String id = hash(Keys.DRIVER_PID, Integer.toString(object.getInt(SENSOR_ID)));
+        String id = Integer.toString(object.getInt(SENSOR_ID));
         String value = Double.toString(object.getDouble(VALUE));
         //Using driver timestamp
         String timestamp = Long.toString(System.currentTimeMillis());
