@@ -50,7 +50,8 @@ public class DriverUtils {
         JSONObject flat = flats.getJSONObject(i);
         JSONArray sensors = flat.getJSONArray(SENSORS);
         for (int j = 0; j < sensors.length(); j++) {
-          String sensor_id = hash(Keys.DRIVER_PID, Integer.toString(sensors.getJSONObject(j).getInt(SENSOR_ID)));
+          //String sensor_id = hash(Keys.DRIVER_PID, Integer.toString(sensors.getJSONObject(j).getInt(SENSOR_ID)));
+          String sensor_id = Integer.toString(sensors.getJSONObject(j).getInt(SENSOR_ID));
           devices.add(new TemperatureDevice(sensor_id, building_num));
         }
       }

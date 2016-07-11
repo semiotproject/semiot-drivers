@@ -8,12 +8,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.json.JSONArray;
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapHandler;
 import org.eclipse.californium.core.CoapObserveRelation;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.WebLink;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.service.cm.ConfigurationException;
@@ -53,7 +53,7 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
     manager.registerDriver(info);
     logger.debug("Try to get descrioption of devices");
     client.setURI(commonConfiguration.getAsString(Keys.COAP_ENDPOINT));
-    client.setTimeout(0);
+    //client.setTimeout(0);
     List<String> buildings = new ArrayList<>();
     Set<WebLink> discover = client.discover();
     for (WebLink link : discover) {
@@ -62,7 +62,7 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
       }
     }
 
-    List<TemperatureDevice> devices = new ArrayList<>();
+    int count = 0;
     for (String building : buildings) {
       try {
         client.setURI(commonConfiguration.getAsString(Keys.COAP_ENDPOINT) + "/" + building
@@ -73,24 +73,19 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
           stop();
           return;
         }
-        devices.addAll(DriverUtils.getDevices(new JSONObject(desq)));
+        List<TemperatureDevice> devices = DriverUtils.getDevices(new JSONObject(desq));
+        for (Device dev : devices) {
+          registerDevice(dev);
+        }
+        logger.debug("{} devices are registered for building {}!", devices.size(), building);
+        count += devices.size();
 
       } catch (JSONException ex) {
         logger.error("Bad response format! Can't read description! Exception message is {}", ex.getMessage());
         return;
       }
     }
-    logger.debug("Description got!");
-    if (devices.isEmpty()) {
-      logger.warn("No devices were found! Driver will be stopped...");
-      return;
-    }
-
-    logger.debug("Try to register all devices");
-    for (Device dev : devices) {
-      registerDevice(dev);
-    }
-    logger.debug("All devices are registered");
+    logger.debug("Yeah. {} devices are registered", count);
 
     logger.debug("Subscribe for new observations");
     for (String building : buildings) {
@@ -117,6 +112,7 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
         }
       }));
     }
+
     logger.info("{} started!", DRIVER_NAME);
   }
 
