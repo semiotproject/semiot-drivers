@@ -1,19 +1,8 @@
 package ru.semiot.drivers.temperature.simulator;
 
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Dictionary;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import org.eclipse.californium.core.CoapClient;
-import org.eclipse.californium.core.CoapHandler;
 import org.eclipse.californium.core.CoapObserveRelation;
-import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.WebLink;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.service.cm.ConfigurationException;
@@ -27,6 +16,15 @@ import ru.semiot.platform.deviceproxyservice.api.drivers.DeviceDriverManager;
 import ru.semiot.platform.deviceproxyservice.api.drivers.DeviceProperties;
 import ru.semiot.platform.deviceproxyservice.api.drivers.DriverInformation;
 import ru.semiot.platform.deviceproxyservice.api.drivers.Observation;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Dictionary;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -63,6 +61,7 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
     }
 
     int count = 0;
+    List<TemperatureDevice> devices = new ArrayList<>();
     for (String building : buildings) {
       try {
         client.setURI(commonConfiguration.getAsString(Keys.COAP_ENDPOINT) + "/" + building
@@ -73,21 +72,22 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
           stop();
           return;
         }
-        List<TemperatureDevice> devices = DriverUtils.getDevices(new JSONObject(desq));
-        for (Device dev : devices) {
-          registerDevice(dev);
-        }
+        devices.addAll(DriverUtils.getDevices(new JSONObject(desq)));
+        
         logger.debug("{} devices are registered for building {}!", devices.size(), building);
-        count += devices.size();
 
       } catch (JSONException ex) {
         logger.error("Bad response format! Can't read description! Exception message is {}", ex.getMessage());
         return;
       }
     }
+    
+    for (Device dev : devices) {
+      registerDevice(dev);
+    }
     logger.debug("Yeah. {} devices are registered", count);
 
-    logger.debug("Subscribe for new observations");
+    /* logger.debug("Subscribe for new observations");
     for (String building : buildings) {
       client.setURI(commonConfiguration.getAsString(Keys.COAP_ENDPOINT) + "/" + building
           + Keys.SIMULATOR_OBSERVATION_POSTFIX);
@@ -111,7 +111,7 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
           logger.error("Something went wrong! Can't get observation");
         }
       }));
-    }
+    }*/
 
     logger.info("{} started!", DRIVER_NAME);
   }
