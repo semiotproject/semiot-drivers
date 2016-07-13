@@ -139,11 +139,11 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
         for (String building : buildings) {
           client.setURI(commonConfiguration.getAsString(Keys.COAP_ENDPOINT) + "/" + building
               + Keys.SIMULATOR_OBSERVATION_POSTFIX);
-          relations.add(client.observe(new CoapHandler() {
+          relations.add(client.observeAndWait(new CoapHandler() {
             @Override
             public void onLoad(CoapResponse response) {
               try {
-
+                logger.debug("Received an observe message!");
                 if (response != null) {
                   DriverUtils.getAndPublishObservations(
                       new JSONArray(response.getResponseText()), manager, devicesMap);

@@ -12,7 +12,7 @@ import ru.semiot.platform.deviceproxyservice.api.drivers.RDFTemplate;
 public class TemperatureObservation extends Observation {
 
   private static final String TEMPERATURE_TEMPLATE_PATH
-      = "/ru/semiot/drivers/temperature/simulator/temperature-observation.ttl";
+      = "/ru/semiot/drivers/temperature/simulator/temperature-observation.jsonld";
   private static RDFTemplate TEMPERATURE_TEMPLATE;
   private static final String TEMPERATURE_TEMPLATE_SENSOR = "${SYSTEM_ID}-temperature";
 
