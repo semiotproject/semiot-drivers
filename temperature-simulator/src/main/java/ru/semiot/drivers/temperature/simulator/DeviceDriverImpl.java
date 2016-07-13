@@ -32,9 +32,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author Daniil Garayzuev <garayzuev@gmail.com>
- */
 public class DeviceDriverImpl implements DeviceDriver, ManagedService {
 
   private static final Logger logger = LoggerFactory.getLogger(DeviceDriverImpl.class);
@@ -47,7 +44,7 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
           + "src/main/resources/ru/semiot/drivers/temperature/simulator/prototype.ttl#Mercury270"));
   private final Map<String, Device> devicesMap = Collections.synchronizedMap(new HashMap<>());
   private final ExecutorService executorService = Executors.newFixedThreadPool(3, r -> {
-    Thread t = new Thread(r, "TemperatureSimulatorThreadPool");
+    Thread t = new Thread(r, "TemperatureSimulator");
     t.setDaemon(true);
     return t;
   });
@@ -95,7 +92,6 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
       try {
         logger.debug("Try to get descrioption of devices");
         client.setURI(commonConfiguration.getAsString(Keys.COAP_ENDPOINT));
-        //client.setTimeout(0);
         List<String> buildings = new ArrayList<>();
         Set<WebLink> discover = client.discover();
         for (WebLink link : discover) {
@@ -104,7 +100,7 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
           }
         }
 
-        logger.debug("Going to talk to {} buildings", buildings.size());
+        logger.info("Found {} buildings!", buildings.size());
 
         int count = 0;
         for (String building : buildings) {
@@ -113,52 +109,54 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
                 + Keys.SIMULATOR_DESCRIPTION_POSTFIX);
             CoapResponse response = client.get();
             if (response == null) {
-              logger.error("Response is null!!! For {} building", building);
+              logger.error("[Building={}] Failed to get the description!", building);
             } else {
               String desq = response.getResponseText();
               if (desq == null) {
-                logger.error("Can't get description! Exiting...");
-                stop();
-                return;
+                logger.error(
+                    "[Building={}] Couldn't get the description! Payload is null.", building);
+              } else {
+                List<TemperatureDevice> devices = DriverUtils.getDevices(new JSONObject(desq));
+                for (Device dev : devices) {
+                  registerDevice(dev);
+                }
+                logger.debug("[Building={}] {} devices were registered", building, devices.size());
+                count += devices.size();
               }
-              List<TemperatureDevice> devices = DriverUtils.getDevices(new JSONObject(desq));
-              for (Device dev : devices) {
-                registerDevice(dev);
-              }
-              logger.debug("{} devices are registered for building {}!", devices.size(), building);
-              count += devices.size();
             }
           } catch (JSONException ex) {
-            logger.error("Bad response format! Can't read description! Exception message is {}", ex.getMessage());
-            return;
+            logger.error(ex.getMessage(), ex);
           }
         }
-        logger.debug("Yeah. {} devices are registered", count);
+        logger.debug("{} devices were registered", count);
 
-        logger.debug("Subscribe for new observations");
+        Thread.sleep(300000); // 5 seconds
+
+        logger.debug("Subscribe for observations");
         for (String building : buildings) {
-          client.setURI(commonConfiguration.getAsString(Keys.COAP_ENDPOINT) + "/" + building
-              + Keys.SIMULATOR_OBSERVATION_POSTFIX);
+          client.setURI(
+              commonConfiguration.getAsString(Keys.COAP_ENDPOINT)
+                  + "/"
+                  + building
+                  + Keys.SIMULATOR_OBSERVATION_POSTFIX);
           relations.add(client.observeAndWait(new CoapHandler() {
             @Override
             public void onLoad(CoapResponse response) {
               try {
-                logger.debug("Received an observe message!");
                 if (response != null) {
                   DriverUtils.getAndPublishObservations(
                       new JSONArray(response.getResponseText()), manager, devicesMap);
                 } else {
-                  logger.error("Response for observe is null!");
+                  logger.error("[Building={}] Received null instead of observations", building);
                 }
-              } catch (JSONException ex) {
-                logger.error("Bad response format! Can't read observations! Exception message is {}",
-                    ex.getMessage());
+              } catch (Throwable ex) {
+                logger.error(ex.getMessage(), ex);
               }
             }
 
             @Override
             public void onError() {
-              logger.error("Something went wrong! Can't get observation");
+              logger.error("[Building={}] Can't get observation!", building);
             }
           }));
         }
@@ -228,7 +226,7 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
             "Bad common configuration. Cannot connect with uri " + uri);
       }
       config.put(Keys.COAP_ENDPOINT, uri);
-    } catch (java.lang.NullPointerException ex) {
+    } catch (Throwable ex) {
       logger.error("Bad common configuration! Can not extract fields");
       throw new ConfigurationException("Common property", "Can not extract fields", ex);
     }
