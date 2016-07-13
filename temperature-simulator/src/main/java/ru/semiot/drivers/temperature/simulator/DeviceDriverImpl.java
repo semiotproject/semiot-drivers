@@ -1,9 +1,11 @@
 package ru.semiot.drivers.temperature.simulator;
 
 import org.eclipse.californium.core.CoapClient;
+import org.eclipse.californium.core.CoapHandler;
 import org.eclipse.californium.core.CoapObserveRelation;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.WebLink;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.service.cm.ConfigurationException;
@@ -44,7 +46,11 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
           + "master/temperature-simulator/"
           + "src/main/resources/ru/semiot/drivers/temperature/simulator/prototype.ttl#Mercury270"));
   private final Map<String, Device> devicesMap = Collections.synchronizedMap(new HashMap<>());
-  private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+  private final ExecutorService executorService = Executors.newFixedThreadPool(3, r -> {
+    Thread t = new Thread(r, "TemperatureSimulatorThreadPool");
+    t.setDaemon(true);
+    return t;
+  });
   private volatile DeviceDriverManager manager;
   private Configuration commonConfiguration;
   private CoapClient client;
@@ -129,31 +135,33 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
         }
         logger.debug("Yeah. {} devices are registered", count);
 
- /* logger.debug("Subscribe for new observations");
-  for (String building : buildings) {
-    client.setURI(commonConfiguration.getAsString(Keys.COAP_ENDPOINT) + "/" + building
-        + Keys.SIMULATOR_OBSERVATION_POSTFIX);
-    relations.add(client.observe(new CoapHandler() {
-      @Override
-      public void onLoad(CoapResponse response) {
-        try {
+        logger.debug("Subscribe for new observations");
+        for (String building : buildings) {
+          client.setURI(commonConfiguration.getAsString(Keys.COAP_ENDPOINT) + "/" + building
+              + Keys.SIMULATOR_OBSERVATION_POSTFIX);
+          relations.add(client.observe(new CoapHandler() {
+            @Override
+            public void onLoad(CoapResponse response) {
+              try {
 
-          //List<TemperatureObservation> obs = DriverUtils.getObservations(new JSONArray(response.getResponseText()));
-          //for (TemperatureObservation o : obs) {
-          //publishNewObservation(o);
-          //}
-          DriverUtils.getAndPublishObservations(new JSONArray(response.getResponseText()), manager, devicesMap);
-        } catch (JSONException ex) {
-          logger.error("Bad response format! Can't read observations! Exception message is {}", ex.getMessage());
+                if (response != null) {
+                  DriverUtils.getAndPublishObservations(
+                      new JSONArray(response.getResponseText()), manager, devicesMap);
+                } else {
+                  logger.error("Response for observe is null!");
+                }
+              } catch (JSONException ex) {
+                logger.error("Bad response format! Can't read observations! Exception message is {}",
+                    ex.getMessage());
+              }
+            }
+
+            @Override
+            public void onError() {
+              logger.error("Something went wrong! Can't get observation");
+            }
+          }));
         }
-      }
-
-      @Override
-      public void onError() {
-        logger.error("Something went wrong! Can't get observation");
-      }
-    }));
-  }*/
       } catch (Throwable e) {
         logger.error(e.getMessage(), e);
       }
@@ -212,7 +220,8 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
       if (uri.endsWith("/")) {
         uri = uri.substring(0, uri.length() - 1);
       }
-      client = new CoapClient(uri);
+      client = new CoapClient(uri)
+          .setExecutor(executorService);
       if (!client.ping()) {
         logger.error("Bad common configuration! Cannot connect with uri '{}'" + uri);
         throw new ConfigurationException(Keys.COAP_ENDPOINT,
