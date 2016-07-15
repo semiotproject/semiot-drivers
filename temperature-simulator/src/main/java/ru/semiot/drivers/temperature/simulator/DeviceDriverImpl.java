@@ -171,11 +171,6 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
     manager.registerDevice(info, device);
   }
 
-  public void publishNewObservation(Observation observation) {
-    String deviceId = observation.getProperty(DeviceProperties.DEVICE_ID);
-    manager.registerObservation(devicesMap.get(deviceId), observation);
-  }
-
   @Override
   public String getDriverName() {
     return DRIVER_NAME;
