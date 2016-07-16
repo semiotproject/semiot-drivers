@@ -16,9 +16,7 @@ import ru.semiot.platform.deviceproxyservice.api.drivers.Configuration;
 import ru.semiot.platform.deviceproxyservice.api.drivers.Device;
 import ru.semiot.platform.deviceproxyservice.api.drivers.DeviceDriver;
 import ru.semiot.platform.deviceproxyservice.api.drivers.DeviceDriverManager;
-import ru.semiot.platform.deviceproxyservice.api.drivers.DeviceProperties;
 import ru.semiot.platform.deviceproxyservice.api.drivers.DriverInformation;
-import ru.semiot.platform.deviceproxyservice.api.drivers.Observation;
 
 import java.net.URI;
 import java.util.ArrayList;
