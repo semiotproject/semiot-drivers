@@ -143,12 +143,12 @@ public class DeviceDriverImpl implements ControllableDeviceDriver, ManagedServic
         uri = uri.substring(0, uri.length() - 1);
       }
       if (!new CoapClient(uri).ping()) {
-        logger.error("Bad repeatable configuration! Cannot connect with uri '{}'" + uri);
+        logger.error("Bad repeatable configuration! Cannot connect with uri '{}'", uri);
         throw new ConfigurationException(Keys.COAP_ENDPOINT,
             "Bad common configuration. Cannot connect with uri " + uri);
       }
       config.put(Keys.COAP_ENDPOINT, uri);
-    } catch (java.lang.NullPointerException ex) {
+    } catch (Throwable ex) {
       logger.error("Bad common configuration! Can not extract fields");
       throw new ConfigurationException("Common property", "Can not extract fields", ex);
     }

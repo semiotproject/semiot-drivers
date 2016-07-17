@@ -71,7 +71,7 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
       for (CoapObserveRelation relation : relations) {
         relation.reactiveCancel();
       }
-      
+
       devicesMap.clear();
       executorService.shutdown();
       try {
