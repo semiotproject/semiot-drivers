@@ -9,9 +9,9 @@ import java.io.IOException;
 public class WeatherStationObservation extends Observation {
 
   private static final String TEMPERATURE_TEMPLATE_PATH =
-      "/ru/semiot/platform/drivers/netatmo/weatherstation/temperature-observation.ttl";
+      "/ru/semiot/platform/drivers/netatmo/weatherstation/temperature-observation.jsonld";
   private static final String HUMIDITY_TEMPLATE_PATH =
-      "/ru/semiot/platform/drivers/netatmo/weatherstation/humidity-observation.ttl";
+      "/ru/semiot/platform/drivers/netatmo/weatherstation/humidity-observation.jsonld";
   private static RDFTemplate TEMPERATURE_TEMPLATE;
   private static RDFTemplate HUMIDITY_TEMPLATE;
 
