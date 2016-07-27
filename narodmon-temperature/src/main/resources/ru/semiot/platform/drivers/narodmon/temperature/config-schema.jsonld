@@ -1,0 +1,50 @@
+{
+	"@context":	{
+		"xsd": "http://www.w3.org/2001/XMLSchema#",
+		"rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+		"dtype": "http://www.linkedmodel.org/schema/dtype#",
+		"geo": "http://www.w3.org/2003/01/geo/wgs84_pos#"
+	},
+	"@type": "semiot:DriverConfigurationSchema",
+	"semiot:maxRepeatableSchemas": 5,
+	"semiot:driverPid": "ru.semiot.platform.drivers.narodmon-temperature",
+	"semiot:view": [
+		{
+			"@type": "semiot:CommonSchema",
+			"ru.semiot.clientAppID": {
+				"@type": "xsd:string",
+				"rdfs:label": "Client application ID",
+				"dtype:defaultValue": "27ivsM9giuwfc"
+			},
+			"ru.semiot.uuid": {
+				"@type": "xsd:string",
+				"rdfs:label": "UUID",
+				"dtype:defaultValue": "41e99f715d97f740cf34cdf146882fa9"
+			},
+			"ru.semiot.pollingInterval": {
+				"@type": "xsd:integer",
+				"rdfs:label": "The polling interval",
+				"dtype:defaultValue": 20
+			}
+		},
+		{
+			"@type": "semiot:RepeatableSchema",
+			"ru.semiot.area": {
+				"@type": "semiot:GeoCircle",
+				"rdfs:label": "The selection area",
+				"ru.semiot.area.latitude": {
+					"@type": "geo:latitude",
+					"dtype:defaultValue": 59.95
+				},
+				"ru.semiot.area.longitude": {
+					"@type": "geo:longitude",
+					"dtype:defaultValue": 30.34
+				},
+				"ru.semiot.area.radius": {
+					"@type": "semiot:Radius",
+					"dtype:defaultValue": 16.45
+				}
+			}
+		}
+	]
+}

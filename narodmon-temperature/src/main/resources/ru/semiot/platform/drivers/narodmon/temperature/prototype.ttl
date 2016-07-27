@@ -1,0 +1,36 @@
+@prefix : <https://raw.githubusercontent.com/semiotproject/semiot-drivers/master/narodmon-temperature/src/main/resources/ru/semiot/platform/drivers/narodmon/temperature/prototype.ttl#> .
+@prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#> .
+@prefix qudt: <http://qudt.org/schema/qudt#> .
+@prefix qudt-quantity: <http://qudt.org/vocab/quantity#> .
+@prefix qudt-unit: <http://qudt.org/vocab/unit#> .
+@prefix proto: <http://w3id.org/semiot/ontologies/proto#> .
+@prefix qudt-quantity-ext: <http://w3id.org/qudt/vocab/quantity/ext#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix semiot: <http://w3id.org/semiot/ontologies/semiot#> .
+
+:NarodmonDevice a ssn:System, proto:Prototype ;
+    rdfs:label "Narodmon Device"@en ;    
+    ssn:hasSubSystem :NarodmonDevice-TemperatureSensor ;    
+    semiot:supportedProcess :NarodmonDevice-Sense-Temperature ;
+    .
+
+:NarodmonDevice-Sense-Temperature a semiot:SensingProcess ;
+    semiot:triggers [ a ssn:Sensing ;
+        ssn:implementedBy :NarodmonDevice-TemperatureSensor ;
+    ] .
+
+:NarodmonDevice-TemperatureSensor a ssn:SensingDevice, proto:Prototype ;
+    ssn:observes qudt-quantity:ThermodynamicTemperature ;
+    ssn:hasMeasurementCapability [
+        a ssn:MeasurementCapability ;
+        ssn:forProperty qudt-quantity:ThermodynamicTemperature ;
+        ssn:hasMeasurementProperty [
+            a qudt:Unit ;
+            ssn:hasValue [
+                a qudt:Quantity ;
+                ssn:hasValue qudt-unit:DegreeCelsius ;
+            ] ; 
+        ] ;
+    ] ;
+    .
