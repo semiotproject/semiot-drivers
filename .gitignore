@@ -14,3 +14,8 @@ hs_err_pid*
 **/target
 **/nb-configuration.xml
 **/nbactions.xml
+
+#Eclipse
+*.classpath
+*.settings/
+*.project
