@@ -38,7 +38,7 @@ public class ScheduledPuller implements Runnable {
           resp.lastIndexOf('\"')));
       if (val != lastValue) {
         ImpulseObservation obs = new ImpulseObservation(device.getId(),
-            ImpulseObservation.TEMPLATE_SENSOR,
+            ImpulseObservation.TEMPLATE_SENSOR.replace("${SYSTEM_ID}", device.getId()),
             Long.toString(System.currentTimeMillis()),
             String.valueOf(MAGIC_NUMBER * val),
             ImpulseObservation.TYPE);
