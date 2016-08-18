@@ -1,0 +1,61 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#> .
+@prefix dul: <http://www.loa-cnr.it/ontologies/DUL.owl#> .
+@prefix qudt-quantity: <http://qudt.org/vocab/quantity#> .
+@prefix qudt-quantity-ext: <http://w3id.org/qudt/vocab/quantity/ext#> .
+@prefix qudt-unit: <http://qudt.org/vocab/unit#> .
+@prefix semiot: <http://w3id.org/semiot/ontologies/semiot#> .
+@prefix proto: <http://w3id.org/semiot/ontologies/proto#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix : <https://raw.githubusercontent.com/semiotproject/semiot-drivers/master/lamp/src/main/resources/ru/semiot/platform/drivers/lamp/prototype.ttl#> .
+
+:Lamp a ssn:System, proto:Prototype ;
+  rdfs:label "A plain lamp"^^xsd:string ;
+  ssn:hasSubSystem :Lamp-Actuator ;
+  semiot:supportedProcess :Lamp-Shine .
+
+:Lamp-Shine a semiot:Process, semiot:ActuationProcess ;
+  semiot:supportedCommand [
+    a semiot:StopCommand ;
+    dcterms:identifier "light-stopcommand" ;
+    rdfs:label "Turn off the light"@en ;
+  ] ;
+  semiot:supportedCommand [
+    a semiot:StartCommand ;
+    dcterms:identifier "light-startcommand" ;
+    rdfs:label "Turn on the light"@en ;
+    dul:hasParameter [ a semiot:MappingParameter, sh:Shape ;
+      sh:property [
+        sh:name "Brightness"@en ;
+        sh:datatype xsd:integer ;
+        sh:defaultValue "50"^^xsd:integer ;
+        sh:predicate dul:hasParameterDataValue ;
+      ] ;
+      semiot:forParameter :Lamp-Shine-Lumen ;
+    ] ;
+  ] ;
+  semiot:triggers [
+    a semiot:Actuating ;
+    ssn:implementedBy :Lamp-Actuator ;
+  ] ;
+  dul:hasParameter :Lamp-Shine-Lumen .
+
+:Lamp-Shine-Lumen a semiot:PropertyMappingParameter ;
+  dul:associatedWith :Lamp-Actuator ;
+  ssn:forProperty qudt-quantity:LuminousFlux .
+
+:Lamp-Actuator a semiot:ActuatingDevice, proto:Prototype ;
+  semiot:actsOn qudt-quantity:LuminousFlux ;
+  semiot:hasActuatingCapability [
+    a semiot:ActuatingCapability ;
+    ssn:forProperty qudt-quantity:LuminousFlux ;
+    semiot:hasActuatingProperty [
+      a semiot:ActuatingProperty, semiot:ActuatingValueRange ;
+      dul:hasDataValue "0"^^xsd:integer ;
+      dul:hasDataValue "100"^^xsd:integer ;
+      dul:isClassifiedBy qudt-unit:Percent ;
+    ] ;
+  ] ;
+.
