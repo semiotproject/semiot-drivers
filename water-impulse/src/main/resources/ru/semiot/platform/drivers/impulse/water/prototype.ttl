@@ -1,0 +1,37 @@
+@prefix : <https://raw.githubusercontent.com/semiotproject/semiot-drivers/master/water-impulse/src/main/resources/ru/semiot/platform/drivers/impulse/water/prototype.ttl#> .
+@prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#> .
+@prefix qudt: <http://qudt.org/schema/qudt#> .
+@prefix qudt-quantity: <http://qudt.org/vocab/quantity#> .
+@prefix qudt-unit: <http://qudt.org/vocab/unit#> .
+@prefix proto: <http://w3id.org/semiot/ontologies/proto#> .
+@prefix qudt-quantity-ext: <http://w3id.org/qudt/vocab/quantity/ext#> .
+@prefix qudt-unit-ext: <http://w3id.org/qudt/vocab/unit/ext#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix semiot: <http://w3id.org/semiot/ontologies/semiot#> .
+
+:ImpulseDevice a ssn:System, proto:Prototype ;
+    rdfs:label "Impulse Device"@en ;    
+    ssn:hasSubSystem :ImpulseDevice-ImpulseSensor ;    
+    semiot:supportedProcess :ImpulseDevice-Sense-Impulse ;
+    .
+
+:ImpulseDevice-Sense-Impulse a semiot:SensingProcess ;
+    semiot:triggers [ a ssn:Sensing ;
+        ssn:implementedBy :ImpulseDevice-ImpulseSensor ;
+    ] .
+
+:ImpulseDevice-ImpulseSensor a ssn:SensingDevice, proto:Prototype ;
+    ssn:observes qudt-quantity:LiquidVolume ;
+    ssn:hasMeasurementCapability [
+        a ssn:MeasurementCapability ;
+        ssn:forProperty qudt-quantity:LiquidVolume ;
+        ssn:hasMeasurementProperty [
+            a qudt:Unit ;
+            ssn:hasValue [
+                a qudt:Quantity ;
+                ssn:hasValue qudt-unit:L ;
+            ] ; 
+        ] ;
+    ] ;
+    .
