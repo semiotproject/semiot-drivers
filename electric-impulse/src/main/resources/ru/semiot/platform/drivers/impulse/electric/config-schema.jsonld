@@ -17,7 +17,7 @@
       },
       "ru.semiot.platform.drivers.pollingInterval": {
         "@type": "xsd:integer",
-        "rdfs:label": "The polling interval",
+        "rdfs:label": "The polling interval (sec)",
 	"dtype:defaultValue": 20
       }
     }

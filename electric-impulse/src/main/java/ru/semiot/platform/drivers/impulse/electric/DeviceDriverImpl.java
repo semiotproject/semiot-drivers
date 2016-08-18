@@ -104,7 +104,7 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
     ScheduledFuture handle = this.scheduler.scheduleAtFixedRate(
         puller, 0,
         commonConfiguration.getAsLong(Keys.POLLING_INTERVAL),
-        TimeUnit.MINUTES);
+        TimeUnit.SECONDS);
 
     logger.debug("Puller started!");
     return handle;
