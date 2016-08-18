@@ -60,7 +60,8 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
       if (link.getURI().matches("/tick\\d+")) {
         index = link.getURI();
         id = getHash(index);
-        ImpulseDevice device = new ImpulseDevice(id, URI + index);
+        ImpulseDevice device = new ImpulseDevice(id, URI + "/tick");
+        //ImpulseDevice device = new ImpulseDevice(id, URI + index);
         devicesMap.put(id, device);
         deviceManager.registerDevice(info, device);
         count++;

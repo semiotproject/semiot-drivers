@@ -17,7 +17,7 @@ public class ScheduledPuller implements Runnable {
   private final CoapClient client;
   private final ImpulseDevice device;
   private final double MAGIC_NUMBER = 0.1;
-  private long lastValue = 0;
+  private long lastValue = -1;
 
   private static final String TEMPLATE_MSG = "\"tick-value\":\"";
 
@@ -30,8 +30,9 @@ public class ScheduledPuller implements Runnable {
   @Override
   public void run() {
     try {
-      logger.debug("Try to pull...");
+       logger.debug("Try to pull from {} ...", client.getURI());
       String resp = client.get().getResponseText();
+      logger.debug("Response msg is {}", resp);
       long val = Long.parseLong(resp.substring(
           resp.lastIndexOf(TEMPLATE_MSG) + TEMPLATE_MSG.length(),
           resp.lastIndexOf('\"')));
