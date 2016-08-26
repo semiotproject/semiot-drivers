@@ -1,217 +1,226 @@
 package ru.semiot.platform.drivers.dht22;
 
-import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.io.IOUtils;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import ru.semiot.platform.deviceproxyservice.api.drivers.Configuration;
 
-import ru.semiot.platform.deviceproxyservice.api.drivers.Device;
 import ru.semiot.platform.deviceproxyservice.api.drivers.DeviceDriver;
-import ru.semiot.platform.deviceproxyservice.api.drivers.DeviceManager;
+import ru.semiot.platform.deviceproxyservice.api.drivers.DeviceDriverManager;
+import ru.semiot.platform.deviceproxyservice.api.drivers.DriverInformation;
 
 public class DeviceDriverImpl implements DeviceDriver, ManagedService {
 
-    private static final String IP = Activator.PID + ".ip";
-    private static final String PORT = Activator.PID + ".port";
-    private static final String LAT = Activator.PID + ".lat";
-    private static final String LNG = Activator.PID + ".lng";
-    private static final String SCHEDULED_DELAY = Activator.PID + ".scheduled_delay";
-            
-    private final List<Device> listDevices = Collections.synchronizedList(new ArrayList<Device>());
-    
-    public static final String templateOffState = "prefix saref: <http://ontology.tno.nl/saref#> "
-			+ "<http://${DOMAIN}/${SYSTEM_PATH}/${DEVICE_HASH}> saref:hasState saref:OffState.";
-    
-    private ScheduledExecutorService scheduler;
-	private ScheduledDevice scheduledDevice;
-	private ScheduledFuture handle = null;
-	private final String driverName = "dht22";
-	private CoAPInterface coap;
-	
-    private volatile DeviceManager deviceManager;
+  private static final Logger logger = LoggerFactory.getLogger(DeviceDriverImpl.class);
+  private static final String DRIVER_NAME = "DHT 22 Device Driver";
 
-    private String templateDescription;
-    private String templateObservationTemperature;
-    private String templateObservationHumidity;
+  private static final int FNV_32_INIT = 0x811c9dc5;
+  private static final int FNV_32_PRIME = 0x01000193;
 
-    private int port = 5683;
-    private String ip = "94.19.230.213";
-    private String lat = "60.01352";
-    private String lng = "30.287799";
-    private int scheduledDelay = 10;
+  private final Configuration configuration = new Configuration();
+  private final DriverInformation info
+      = new DriverInformation(Keys.DRIVER_PID,
+          URI.create("https://raw.githubusercontent.com/semiotproject/semiot-drivers/"
+              + "master/dht22/"
+              + "src/main/resources/ru/semiot/platform/drivers/dht22/prototype.ttl#DHT22Device"));
+  private final Map<String, DHT22Device> devicesMap = Collections.synchronizedMap(new HashMap<>());
 
-    public List<Device> listDevices() {
-        return listDevices;
+  private volatile DeviceDriverManager deviceManager;
+  private Configuration commonConfiguration;
+  private List<Configuration> configurations;
+  private ScheduledExecutorService scheduler;
+  private List<ScheduledFuture> handles = null;
+  private List<Integer> countsRepeatableProperties;
+
+  private static final String POSTFIX = "/dht1";
+
+  public void start() {
+    logger.info("{} started!", DRIVER_NAME);
+    deviceManager.registerDriver(info);
+    String uri;
+    String id;
+    for (Configuration cfg : configurations) {
+      uri = cfg.getAsString(Keys.COAP_ENDPOINT);
+      id = getHash(uri);
+      DHT22Device device = new DHT22Device(id, uri + POSTFIX);
+      devicesMap.put(id, device);
+      deviceManager.registerDevice(info, device);
     }
 
-    public void start() {
-        System.out.println("Dht22 temperature driver started!");
-
-        readTemplates();
-
-        coap = new CoAPInterface();
-        
-        this.scheduler = Executors.newScheduledThreadPool(1);
-		this.scheduledDevice = new ScheduledDevice(this);
-		this.scheduledDevice.createCoapClients();
-		startSheduled();
+    handles = new ArrayList<>();
+    this.scheduler = Executors.newScheduledThreadPool(devicesMap.size());
+    logger.debug("Try to start {} pullers", devicesMap.size());
+    for (DHT22Device dev : devicesMap.values()) {
+      handles.add(startPuller(dev));
     }
+    logger.debug("All pullers started");
+  }
 
-    public void stop() {
-        // перевод всех устройств в статус офф
-        stopSheduled();
-        coap.stop();
+  public void stop() {
+    logger.debug("{} is stopping!", DRIVER_NAME);
 
-        for (Device device : listDevices)
-		{
-        	if(device.getTurnOn()) {
-	        	System.out.println(templateOffState.replace("${DOMAIN}", getDomain())
-	        			.replace("${SYSTEM_PATH}", getPathSystemUri())
-	        			.replace("${DEVICE_HASH}", device.getID()));
-	        	inactiveDevice(templateOffState.replace("${DOMAIN}", getDomain())
-	        			.replace("${SYSTEM_PATH}", getPathSystemUri())
-	        			.replace("${DEVICE_HASH}", device.getID()));
-        	}
-		}
-        
-        System.out.println("Dht22 temperature driver stopped!");
+    try {
+
+      devicesMap.clear();
+      scheduler.shutdown();
+      try {
+        scheduler.awaitTermination(10, TimeUnit.SECONDS);
+      } finally {
+        scheduler.shutdownNow();
+      }
+    } catch (Throwable e) {
+      e.printStackTrace();
     }
+    logger.info("{} stopped!", DRIVER_NAME);
+  }
 
-    public void updated(Dictionary properties) throws ConfigurationException {
-        synchronized(this) {
-            System.out.println(properties == null);
-            if(properties != null) {
-            	ip = (String) properties.get(IP);
-            	port = (Integer) properties.get(PORT);
-            	lat = (String) properties.get(LAT);
-            	lng = (String) properties.get(LNG);
-            	int newDelay = (Integer) properties.get(SCHEDULED_DELAY);
-            	if(newDelay != scheduledDelay) {
-            		scheduledDelay = newDelay;
-            		stopSheduled();
-            		startSheduled();
-            	}
-            }
+  public ScheduledFuture startPuller(DHT22Device dev) {
+    logger.debug("Try to start puller!");
+    ScheduledPuller puller = new ScheduledPuller(this, dev);
+
+    logger.debug("Try to schedule polling with interval {} min",
+        commonConfiguration.get(Keys.POLLING_INTERVAL));
+
+    ScheduledFuture handle = this.scheduler.scheduleAtFixedRate(
+        puller, 0,
+        commonConfiguration.getAsLong(Keys.POLLING_INTERVAL),
+        TimeUnit.MINUTES);
+
+    logger.debug("Puller started!");
+    return handle;
+  }
+
+  public void stopPuller(ScheduledFuture handle) {
+    logger.debug("Try to stop puller!");
+    if (handle == null) {
+      return;
+    }
+    handle.cancel(true);
+    logger.debug("Puller stoped!");
+  }
+
+  public void registerDevice(DHT22Device device) {
+    if (!devicesMap.containsKey(device.getId())) {
+      devicesMap.put(device.getId(), device);
+      deviceManager.registerDevice(info, device);
+    }
+  }
+
+  public void publishNewObservation(DHT22Observation observation) {
+    String deviceId = observation.getProperty(Keys.DEVICE_ID);
+    deviceManager.registerObservation(devicesMap.get(deviceId), observation);
+  }
+
+  @Override
+  public String getDriverName() {
+    return DRIVER_NAME;
+  }
+
+  @Override
+  public void updated(Dictionary properties) throws ConfigurationException {
+    synchronized (this) {
+      if (properties != null) {
+        if (!configuration.isConfigured()) {
+          logger.debug("Configuration got");
+          try {
+            configuration.putAll(properties);
+            commonConfiguration = getCommonConfiguration(configuration);
+            countsRepeatableProperties = getCountsRepeatableProperties(Keys.COAP_ENDPOINT);
+            configurations = getConfigurations(countsRepeatableProperties);
+            configuration.setConfigured();
+            logger.info("Received configuration is correct!");
+          } catch (ConfigurationException ex) {
+            configuration.clear();
+            throw ex;
+          }
+        } else {
+          logger.warn("Is already configured! Skipping.");
         }
+      } else {
+        logger.debug("Configuration is empty. Skipping.");
+      }
     }
-    
-    public void inactiveDevice(String message) {
-    	deviceManager.inactiveDevice(message);
-    }
+  }
 
-    public void publish(String topic, String message) {
-        deviceManager.publish(topic, message);
-    }
+  private List<Integer> getCountsRepeatableProperties(String propPrefix) throws ConfigurationException {
+    logger.debug("Try to get count of repeatable property \"{}\"", propPrefix);
+    List<Integer> counts = new ArrayList<>();
+    int index;
 
-    public void addDevice(Device device) {
-    	listDevices.add(device);
-        deviceManager.register(device);
+    for (String key : configuration.keySet()) {
+      if (key.contains(propPrefix) && !counts.contains(
+          index = Integer.parseInt(key.substring(0, key.indexOf("." + propPrefix))))) {
+        counts.add(index);
+      }
     }
+    if (counts.isEmpty()) {
+      logger.error("Bad repeatable configuration! Did not find a repeatable property");
+      throw new ConfigurationException(propPrefix, "Did not find a repeatable property");
+    }
+    return counts;
+  }
 
-    public boolean contains(Device device) {
-        return listDevices.contains(device);
+  private List<Configuration> getConfigurations(List<Integer> counts) throws ConfigurationException {
+    logger.debug("Try to get repeatable configuration for each puller");
+    List<Configuration> conf = new ArrayList<>();
+    for (int i : counts) {
+      Configuration cfg = new Configuration();
+      String uri = configuration.getAsString(String.valueOf(i) + "." + Keys.COAP_ENDPOINT);
+      if (uri == null) {
+        logger.error("Bad repeatable configuration! Field '{}' is null!", Keys.COAP_ENDPOINT);
+        throw new ConfigurationException(Keys.COAP_ENDPOINT,
+            "Bad repeatable configuration. Field is null");
+      }
+      if (uri.endsWith("/")) {
+        uri = uri.substring(0, uri.length() - 1);
+      }
+      cfg.put(Keys.COAP_ENDPOINT, uri);
+      conf.add(cfg);
     }
+    return conf;
+  }
 
-    public String getTemplateDescription() {
-        return templateDescription;
+  private Configuration getCommonConfiguration(Configuration cfg) throws ConfigurationException {
+    logger.debug("Try to get common configuration");
+    Configuration config = new Configuration();
+    try {
+      String pollingInterval = cfg.getAsString(Keys.POLLING_INTERVAL);
+      if (pollingInterval == null) {
+        logger.error("Bad common configuration! Field '{}' is null!", Keys.POLLING_INTERVAL);
+        throw new ConfigurationException(Keys.POLLING_INTERVAL,
+            "Bad common configuration. Field is null");
+      }
+      config.put(Keys.POLLING_INTERVAL, pollingInterval);
+    } catch (Throwable ex) {
+      logger.error("Bad common configuration! Can not extract fields");
+      throw new ConfigurationException("Common property", "Can not extract fields", ex);
     }
+    return config;
+  }
 
-    public String getTemplateObservationTemperature() {
-        return templateObservationTemperature;
+  private String getHash(String id) {
+    String name = Keys.DRIVER_PID + id;
+    int h = FNV_32_INIT;
+    final int len = name.length();
+    for (int i = 0; i < len; i++) {
+      h ^= name.charAt(i);
+      h *= FNV_32_PRIME;
     }
-    
-    public String getTemplateObservationHumidity() {
-        return templateObservationHumidity;
-    }
-    
-    public int getPort() {
-		return port;
-	}
-    
-    public String getIp() {
-		return ip;
-	}
-    
-    public String getLat() {
-    	return lat;
-    }
-    
-    public String getLng() {
-    	return lng;
-    }
-    
-    public String getDomain() {
-    	return deviceManager.getDomain();
-    }
-    
-    public String getPathSystemUri() {
-    	return deviceManager.getPathSystemUri();
-    }
-    
-    public String getPathSensorUri() {
-    	return deviceManager.getPathSensorUri();
-    }
-    
-    public String getDriverName() {
-		return driverName;
-	}
-    
-    public CoAPInterface getCoap() {
-    	return coap;
-    }
-    
-    private void readTemplates() {
-        try {
-            this.templateDescription = IOUtils.toString(DeviceDriverImpl.class
-                    .getResourceAsStream("/ru/semiot/platform/drivers/dht22/description.ttl"));
-            this.templateObservationTemperature = IOUtils.toString(DeviceDriverImpl.class
-                    .getResourceAsStream("/ru/semiot/platform/drivers/dht22/observationTemperature.ttl"));
-            this.templateObservationHumidity = IOUtils.toString(DeviceDriverImpl.class
-                    .getResourceAsStream("/ru/semiot/platform/drivers/dht22/observationHumidity.ttl"));
-        } catch (IOException ex) {
-            System.out.println("Can't read templates");
-            throw new IllegalArgumentException(ex);
-        }
-    }
-    
-    // TODO
-    public void restartSheduller() {
-    	/*stopSheduled();
-    	try {
-			Thread.currentThread().sleep(1000 * 60 * 20);
-		} catch (InterruptedException e) {
-			System.out.println(e.getMessage());
-		}
-    	this.scheduledDevice.createCoapClients();
-    	startSheduled();*/
-    }
-    
-    public void startSheduled() {
-		if (this.handle != null)
-			stopSheduled();
-
-		this.handle = this.scheduler.scheduleAtFixedRate(this.scheduledDevice,
-				1, scheduledDelay, TimeUnit.MINUTES); // Minutes
-		System.out.println("UScheduled started. Repeat will do every "
-				+ String.valueOf(scheduledDelay) + " seconds");
-	}
-
-	public void stopSheduled() {
-		if (handle == null)
-			return;
-
-		handle.cancel(true);
-		handle = null;
-		System.out.println("UScheduled stoped");
-	}
+    long longHash = h & 0xffffffffl;
+    return String.valueOf(longHash);
+  }
 
 }
