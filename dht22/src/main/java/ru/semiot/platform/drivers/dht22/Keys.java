@@ -14,5 +14,6 @@ public abstract class Keys extends DeviceProperties{
 
   public static final String OBSERVATION_VALUE = "ru.semiot.platform.drivers.dht22.observation.value";
   public static final String OBSERVATION_TYPE = "ru.semiot.platform.drivers.dht22.observation.type";
+  public static final String ROOM = "ru.semiot.platform.drivers.dht22.room";
 
 }

@@ -15,6 +15,7 @@ public class DHT22Device extends Device {
       = "/ru/semiot/platform/drivers/dht22/description.ttl";
   private static RDFTemplate DESCRIPTION_TEMPLATE;
   private final String URI;
+  private final String room;
 
   static {
     try {
@@ -26,10 +27,12 @@ public class DHT22Device extends Device {
     }
   }
 
-  public DHT22Device(String id, String URI) {
+  public DHT22Device(String id, String URI, String room) {
     super(id);
     setProperty(Keys.DEVICE_ID, id);
+    setProperty(Keys.ROOM, room);
     this.URI = URI;
+    this.room = room;
   }
 
   public String getURI(){

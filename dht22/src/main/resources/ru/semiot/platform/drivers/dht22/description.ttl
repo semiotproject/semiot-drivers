@@ -10,6 +10,7 @@
 @prefix proto: <http://w3id.org/semiot/ontologies/proto#> .
 @prefix semiot: <http://w3id.org/semiot/ontologies/semiot#> .
 @prefix geoliteral: <http://www.bigdata.com/rdf/geospatial/literals/v1#> .
+@prefix schema: <http://schema.org/> .
 @prefix ws: <https://raw.githubusercontent.com/semiotproject/semiot-drivers/master/dht22/src/main/resources/ru/semiot/platform/drivers/dht22/prototype.ttl#> .
 
 <{{ru.semiot.platform.systems.uriprefix}}/{{ru.semiot.platform.device.id}}> a ssn:System, proto:Individual ;
@@ -18,6 +19,11 @@
     ssn:hasSubSystem <{{ru.semiot.platform.systems.uriprefix}}/{{ru.semiot.platform.device.id}}/{{ru.semiot.platform.subsystem.path}}/{{ru.semiot.platform.device.id}}-temperature> ;
     ssn:hasSubSystem <{{ru.semiot.platform.systems.uriprefix}}/{{ru.semiot.platform.device.id}}/{{ru.semiot.platform.subsystem.path}}/{{ru.semiot.platform.device.id}}-humidity> ;
     dcterms:identifier "{{ru.semiot.platform.device.id}}"^^xsd:string ;
+    geo:location [
+        a schema:Place ;
+        schema:branchCode "{{ru.semiot.platform.drivers.dht22.room}}"^^xsd:integer ;
+        rdfs:label "Building {{ru.semiot.platform.drivers.dht22.room}}" ;
+    ] ;
     .
 
 <{{ru.semiot.platform.systems.uriprefix}}/{{ru.semiot.platform.device.id}}/{{ru.semiot.platform.subsystem.path}}/{{ru.semiot.platform.device.id}}-temperature>

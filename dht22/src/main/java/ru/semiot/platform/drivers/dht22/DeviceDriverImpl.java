@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import org.eclipse.californium.core.CoapClient;
 
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
@@ -46,20 +47,30 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
   private List<Integer> countsRepeatableProperties;
 
   private static final String POSTFIX = "/dht1";
+  private static final String LOCATION = "/location";
+  private static final String LOCATION_RSP_TEMPLATE = "\"room-number\":\"";
 
   public void start() {
     logger.info("{} started!", DRIVER_NAME);
     deviceManager.registerDriver(info);
-    String uri;
-    String id;
+    String uri, id, room, resp;
+    CoapClient client = new CoapClient();
     for (Configuration cfg : configurations) {
       uri = cfg.getAsString(Keys.COAP_ENDPOINT);
       id = getHash(uri);
-      DHT22Device device = new DHT22Device(id, uri + POSTFIX);
-      devicesMap.put(id, device);
-      deviceManager.registerDevice(info, device);
+      client.setURI(uri + LOCATION);
+      try {
+        resp = client.get().getResponseText();
+        room = resp.substring(resp.lastIndexOf(LOCATION_RSP_TEMPLATE) + LOCATION_RSP_TEMPLATE.length(),
+            resp.indexOf("\"", resp.lastIndexOf(LOCATION_RSP_TEMPLATE) + LOCATION_RSP_TEMPLATE.length()));
+        DHT22Device device = new DHT22Device(id, uri + POSTFIX, room);
+        devicesMap.put(id, device);
+        deviceManager.registerDevice(info, device);
+      } catch (NullPointerException ex) {
+        logger.warn("Can't get response from {}", uri);
+      }
     }
-
+    client.shutdown();
     handles = new ArrayList<>();
     this.scheduler = Executors.newScheduledThreadPool(devicesMap.size());
     logger.debug("Try to start {} pullers", devicesMap.size());
