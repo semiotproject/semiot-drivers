@@ -22,7 +22,7 @@
     geo:location [
         a schema:Place ;
         schema:branchCode "{{ru.semiot.platform.drivers.dht22.room}}"^^xsd:integer ;
-        rdfs:label "Building {{ru.semiot.platform.drivers.dht22.room}}" ;
+        rdfs:label "Flat {{ru.semiot.platform.drivers.dht22.room}}" ;
     ] ;
     .
 
