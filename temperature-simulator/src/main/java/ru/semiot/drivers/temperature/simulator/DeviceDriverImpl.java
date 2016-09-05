@@ -216,7 +216,7 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
           .setEndpoint(new CoapEndpoint(cfg.getAsInteger(Keys.COAP_CLIENT_PORT)))
           .setExecutor(executorService);
       if (!client.ping()) {
-        logger.error("Bad common configuration! Cannot connect with uri '{}'" + uri);
+        logger.error("Bad common configuration! Cannot connect to [{}]", uri);
         throw new ConfigurationException(Keys.COAP_ENDPOINT,
             "Bad common configuration. Cannot connect with uri " + uri);
       }

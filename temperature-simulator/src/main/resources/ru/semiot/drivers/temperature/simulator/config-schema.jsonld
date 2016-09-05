@@ -14,10 +14,7 @@
         "@type": "xsd:anyURI",
         "rdfs:label": "COAP Endpoint",
         "dtype:defaultValue": "coap://winghouse.semiot.ru:5683"
-      }
-    },
-    {
-      "@type": "semiot:CommonSchema",
+      },
       "ru.semiot.drivers.COAPClientPort": {
         "@type": "xsd:integer",
         "rdfs:label": "COAP Client Port",
