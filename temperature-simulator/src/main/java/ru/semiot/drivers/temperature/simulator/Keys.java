@@ -8,6 +8,7 @@ public abstract class Keys {
 
   public static final String DRIVER_PID = "ru.semiot.drivers.temperature-simulator";
   public static final String COAP_ENDPOINT = "ru.semiot.drivers.COAPEndpoint";
+  public static final String COAP_CLIENT_PORT = "ru.semiot.drivers.COAPClientPort";
 
   public static final String SIMULATOR_DESCRIPTION_POSTFIX = "/desc";
   public static final String SIMULATOR_OBSERVATION_POSTFIX = "/obs";
