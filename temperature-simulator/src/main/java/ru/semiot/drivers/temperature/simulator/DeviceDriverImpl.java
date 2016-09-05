@@ -6,6 +6,7 @@ import org.eclipse.californium.core.CoapObserveRelation;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.WebLink;
 import org.eclipse.californium.core.network.CoapEndpoint;
+import org.eclipse.californium.core.network.EndpointManager;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -212,8 +213,9 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
       if (uri.endsWith("/")) {
         uri = uri.substring(0, uri.length() - 1);
       }
+      EndpointManager.getEndpointManager()
+          .setDefaultEndpoint(new CoapEndpoint(cfg.getAsInteger(Keys.COAP_CLIENT_PORT)));
       client = new CoapClient(uri)
-          .setEndpoint(new CoapEndpoint(cfg.getAsInteger(Keys.COAP_CLIENT_PORT)))
           .setExecutor(executorService);
       if (!client.ping()) {
         logger.error("Bad common configuration! Cannot connect to [{}]", uri);
