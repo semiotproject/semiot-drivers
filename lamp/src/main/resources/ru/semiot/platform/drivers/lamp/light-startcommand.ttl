@@ -1,0 +1,17 @@
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dul: <http://www.loa-cnr.it/ontologies/DUL.owl#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix semiot: <http://w3id.org/semiot/ontologies/semiot#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix : <https://raw.githubusercontent.com/semiotproject/semiot-drivers/master/lamp/src/main/resources/ru/semiot/platform/drivers/lamp/prototype.ttl#> .
+
+[ a semiot:StartCommand ;
+  dcterms:identifier "light-startcommand" ;
+  semiot:forProcess <{{ru.semiot.platform.process.uri}}> ;
+  dul:associatedWith <{{ru.semiot.platform.device.uri}}> ;
+  dul:hasParameter [
+    a semiot:MappingParameter ;
+    semiot:forParameter :Lamp-Shine-Lumen ;
+    dul:hasParameterDataValue "{{ru.semiot.platform.drivers.lamp.lumen}}"^^xsd:integer ;
+  ] ;
+] .

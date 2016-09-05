@@ -1,16 +1,18 @@
-package ru.semiot.platform.drivers.dht22;
+package ru.semiot.platform.drivers.impulse.electric;
 
 import java.util.Properties;
-
 import org.apache.felix.dm.DependencyActivatorBase;
 import org.apache.felix.dm.DependencyManager;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.service.cm.ManagedService;
-
 import ru.semiot.platform.deviceproxyservice.api.drivers.DeviceDriver;
 import ru.semiot.platform.deviceproxyservice.api.drivers.DeviceDriverManager;
 
+/**
+ *
+ * @author Daniil Garayzuev <garayzuev@gmail.com>
+ */
 public class Activator extends DependencyActivatorBase {
 
   @Override

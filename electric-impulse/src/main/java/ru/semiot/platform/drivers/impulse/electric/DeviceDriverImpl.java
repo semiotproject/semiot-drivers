@@ -1,4 +1,15 @@
-package ru.semiot.platform.drivers.dht22;
+package ru.semiot.platform.drivers.impulse.electric;
+
+import org.eclipse.californium.core.CoapClient;
+import org.eclipse.californium.core.WebLink;
+import org.osgi.service.cm.ConfigurationException;
+import org.osgi.service.cm.ManagedService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import ru.semiot.platform.deviceproxyservice.api.drivers.Configuration;
+import ru.semiot.platform.deviceproxyservice.api.drivers.DeviceDriver;
+import ru.semiot.platform.deviceproxyservice.api.drivers.DeviceDriverManager;
+import ru.semiot.platform.deviceproxyservice.api.drivers.DriverInformation;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -7,26 +18,16 @@ import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import org.eclipse.californium.core.CoapClient;
-
-import org.osgi.service.cm.ConfigurationException;
-import org.osgi.service.cm.ManagedService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import ru.semiot.platform.deviceproxyservice.api.drivers.Configuration;
-
-import ru.semiot.platform.deviceproxyservice.api.drivers.DeviceDriver;
-import ru.semiot.platform.deviceproxyservice.api.drivers.DeviceDriverManager;
-import ru.semiot.platform.deviceproxyservice.api.drivers.DriverInformation;
 
 public class DeviceDriverImpl implements DeviceDriver, ManagedService {
 
   private static final Logger logger = LoggerFactory.getLogger(DeviceDriverImpl.class);
-  private static final String DRIVER_NAME = "DHT 22 Device Driver";
+  private static final String DRIVER_NAME = "Electric Impulse Device Driver";
 
   private static final int FNV_32_INIT = 0x811c9dc5;
   private static final int FNV_32_PRIME = 0x01000193;
@@ -35,46 +36,42 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
   private final DriverInformation info
       = new DriverInformation(Keys.DRIVER_PID,
           URI.create("https://raw.githubusercontent.com/semiotproject/semiot-drivers/"
-              + "master/dht22/"
-              + "src/main/resources/ru/semiot/platform/drivers/dht22/prototype.ttl#DHT22Device"));
-  private final Map<String, DHT22Device> devicesMap = Collections.synchronizedMap(new HashMap<>());
+              + "master/electric-impulse/"
+              + "src/main/resources/ru/semiot/platform/drivers/impulse/electric/prototype.ttl#ImpulseDevice"));
+  private final Map<String, ImpulseDevice> devicesMap = Collections.synchronizedMap(new HashMap<>());
 
   private volatile DeviceDriverManager deviceManager;
   private Configuration commonConfiguration;
-  private List<Configuration> configurations;
   private ScheduledExecutorService scheduler;
   private List<ScheduledFuture> handles = null;
-  private List<Integer> countsRepeatableProperties;
-
-  private static final String POSTFIX = "/dht1";
-  private static final String LOCATION = "/location";
-  private static final String LOCATION_RSP_TEMPLATE = "\"room-number\":\"";
 
   public void start() {
     logger.info("{} started!", DRIVER_NAME);
     deviceManager.registerDriver(info);
-    String uri, id, room, resp;
-    CoapClient client = new CoapClient();
-    for (Configuration cfg : configurations) {
-      uri = cfg.getAsString(Keys.COAP_ENDPOINT);
-      id = getHash(uri);
-      client.setURI(uri + LOCATION);
-      try {
-        resp = client.get().getResponseText();
-        room = resp.substring(resp.lastIndexOf(LOCATION_RSP_TEMPLATE) + LOCATION_RSP_TEMPLATE.length(),
-            resp.indexOf("\"", resp.lastIndexOf(LOCATION_RSP_TEMPLATE) + LOCATION_RSP_TEMPLATE.length()));
-        DHT22Device device = new DHT22Device(id, uri + POSTFIX, room);
+
+    Set<WebLink> discover = new CoapClient(commonConfiguration.getAsString(Keys.COAP_ENDPOINT))
+        .discover();
+    String index;
+    String URI = commonConfiguration.getAsString(Keys.COAP_ENDPOINT);
+    String id;
+    int count = 0;
+    for (WebLink link : discover) {
+      logger.debug("Link is {}", link.getURI());
+      if (link.getURI().matches("/tick\\d+")) {
+        index = link.getURI();
+        id = getHash(index);
+        ImpulseDevice device = new ImpulseDevice(id, URI + "/tick");
+        //ImpulseDevice device = new ImpulseDevice(id, URI + index);
         devicesMap.put(id, device);
         deviceManager.registerDevice(info, device);
-      } catch (NullPointerException ex) {
-        logger.warn("Can't get response from {}", uri);
+        count++;
       }
     }
-    client.shutdown();
+
     handles = new ArrayList<>();
-    this.scheduler = Executors.newScheduledThreadPool(devicesMap.size());
-    logger.debug("Try to start {} pullers", devicesMap.size());
-    for (DHT22Device dev : devicesMap.values()) {
+    this.scheduler = Executors.newScheduledThreadPool(count);
+    logger.debug("Try to start {} pullers", count);
+    for (ImpulseDevice dev : devicesMap.values()) {
       handles.add(startPuller(dev));
     }
     logger.debug("All pullers started");
@@ -98,7 +95,7 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
     logger.info("{} stopped!", DRIVER_NAME);
   }
 
-  public ScheduledFuture startPuller(DHT22Device dev) {
+  public ScheduledFuture startPuller(ImpulseDevice dev) {
     logger.debug("Try to start puller!");
     ScheduledPuller puller = new ScheduledPuller(this, dev);
 
@@ -108,7 +105,7 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
     ScheduledFuture handle = this.scheduler.scheduleAtFixedRate(
         puller, 0,
         commonConfiguration.getAsLong(Keys.POLLING_INTERVAL),
-        TimeUnit.MINUTES);
+        TimeUnit.SECONDS);
 
     logger.debug("Puller started!");
     return handle;
@@ -123,14 +120,14 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
     logger.debug("Puller stoped!");
   }
 
-  public void registerDevice(DHT22Device device) {
+  public void registerDevice(ImpulseDevice device) {
     if (!devicesMap.containsKey(device.getId())) {
       devicesMap.put(device.getId(), device);
       deviceManager.registerDevice(info, device);
     }
   }
 
-  public void publishNewObservation(DHT22Observation observation) {
+  public void publishNewObservation(ImpulseObservation observation) {
     String deviceId = observation.getProperty(Keys.DEVICE_ID);
     deviceManager.registerObservation(devicesMap.get(deviceId), observation);
   }
@@ -149,8 +146,6 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
           try {
             configuration.putAll(properties);
             commonConfiguration = getCommonConfiguration(configuration);
-            countsRepeatableProperties = getCountsRepeatableProperties(Keys.COAP_ENDPOINT);
-            configurations = getConfigurations(countsRepeatableProperties);
             configuration.setConfigured();
             logger.info("Received configuration is correct!");
           } catch (ConfigurationException ex) {
@@ -166,50 +161,22 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
     }
   }
 
-  private List<Integer> getCountsRepeatableProperties(String propPrefix) throws ConfigurationException {
-    logger.debug("Try to get count of repeatable property \"{}\"", propPrefix);
-    List<Integer> counts = new ArrayList<>();
-    int index;
-
-    for (String key : configuration.keySet()) {
-      if (key.contains(propPrefix) && !counts.contains(
-          index = Integer.parseInt(key.substring(0, key.indexOf("." + propPrefix))))) {
-        counts.add(index);
-      }
-    }
-    if (counts.isEmpty()) {
-      logger.error("Bad repeatable configuration! Did not find a repeatable property");
-      throw new ConfigurationException(propPrefix, "Did not find a repeatable property");
-    }
-    return counts;
-  }
-
-  private List<Configuration> getConfigurations(List<Integer> counts) throws ConfigurationException {
-    logger.debug("Try to get repeatable configuration for each puller");
-    List<Configuration> conf = new ArrayList<>();
-    for (int i : counts) {
-      Configuration cfg = new Configuration();
-      String uri = configuration.getAsString(String.valueOf(i) + "." + Keys.COAP_ENDPOINT);
-      if (uri == null) {
-        logger.error("Bad repeatable configuration! Field '{}' is null!", Keys.COAP_ENDPOINT);
-        throw new ConfigurationException(Keys.COAP_ENDPOINT,
-            "Bad repeatable configuration. Field is null");
-      }
-      if (uri.endsWith("/")) {
-        uri = uri.substring(0, uri.length() - 1);
-      }
-      cfg.put(Keys.COAP_ENDPOINT, uri);
-      conf.add(cfg);
-    }
-    return conf;
-  }
-
   private Configuration getCommonConfiguration(Configuration cfg) throws ConfigurationException {
     logger.debug("Try to get common configuration");
     Configuration config = new Configuration();
     try {
+      String uri = cfg.getAsString(Keys.COAP_ENDPOINT);
+      if (uri == null) {
+        logger.error("Bad common configuration! Field '{}' is null!", Keys.COAP_ENDPOINT);
+        throw new ConfigurationException(Keys.COAP_ENDPOINT,
+            "Bad common configuration. Field is null");
+      }
+      if (uri.endsWith("/")) {
+        uri = uri.substring(0, uri.length() - 1);
+      }
+      config.put(Keys.COAP_ENDPOINT, uri);
       String pollingInterval = cfg.getAsString(Keys.POLLING_INTERVAL);
-      if (pollingInterval == null) {
+      if (uri == null) {
         logger.error("Bad common configuration! Field '{}' is null!", Keys.POLLING_INTERVAL);
         throw new ConfigurationException(Keys.POLLING_INTERVAL,
             "Bad common configuration. Field is null");

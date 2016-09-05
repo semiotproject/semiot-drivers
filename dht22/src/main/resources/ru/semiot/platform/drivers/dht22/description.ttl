@@ -1,59 +1,41 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#> .
-@prefix mcht: <http://purl.org/NET/ssnext/machinetools#> .
-@prefix ssncom: <http://purl.org/NET/ssnext/communication#> .
-@prefix saref: <http://ontology.tno.nl/saref#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix geo: <http://www.w3.org/2003/01/geo/wgs84_pos#> .
 @prefix dul: <http://www.loa-cnr.it/ontologies/DUL.owl#> .
 @prefix qudt-quantity: <http://qudt.org/vocab/quantity#> .
 @prefix qudt-unit: <http://qudt.org/vocab/unit#> .
 @prefix qudt: <http://qudt.org/schema/qudt#> .
-@prefix dcterms: <http://purl.org/dc/terms/#> .
-@prefix ext: <http://w3id.org/qudt/vocab/quantity/ext#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix proto: <http://w3id.org/semiot/ontologies/proto#> .
+@prefix semiot: <http://w3id.org/semiot/ontologies/semiot#> .
+@prefix geoliteral: <http://www.bigdata.com/rdf/geospatial/literals/v1#> .
+@prefix schema: <http://schema.org/> .
+@prefix ws: <https://raw.githubusercontent.com/semiotproject/semiot-drivers/master/dht22/src/main/resources/ru/semiot/platform/drivers/dht22/prototype.ttl#> .
 
-<http://${DOMAIN}/${SYSTEM_PATH}/${DEVICE_HASH}> a ssn:System ;
-    rdfs:label "Dht22 Meter #${DEVICE_HASH}"@en ;
-    dcterms:identifier "${DEVICE_HASH}"^^xsd:string ;
-	dul:hasLocation [
-		a geo:Point ;
-		geo:lat "${LATITUDE}"^^xsd:string ;
-		geo:long "${LONGITUDE}"^^xsd:string
-	] ;
-	saref:hasState saref:OnState ;
-    ssncom:hasCommunicationEndpoint <http://${DOMAIN}/${SYSTEM_PATH}/topic=${DEVICE_HASH}> ;
-    ssn:hasSubSystem <http://${DOMAIN}/${SENSOR_PATH}/${DEVICE_HASH}-1> ;
-    ssn:hasSubSystem <http://${DOMAIN}/${SENSOR_PATH}/${DEVICE_HASH}-2> .
-    	
-<http://${DOMAIN}/${SENSOR_PATH}/${DEVICE_HASH}-1> a ssn:SensingDevice ;
-    ssn:observes qudt-quantity:ThermodynamicTemperature ;
-    ssn:hasMeasurementCapability [
-        a ssn:MeasurementCapability ;
-        ssn:forProperty qudt-quantity:ThermodynamicTemperature ;
-        ssn:hasMeasurementProperty [
-            a qudt:Unit ;
-            ssn:hasValue [
-                a qudt:Quantity ;
-                ssn:hasValue qudt-unit:DegreeCelsius ;
-            ] ;
-        ] ;
-    ] .
-    
-<http://${DOMAIN}/${SENSOR_PATH}/${DEVICE_HASH}-2> a ssn:SensingDevice ;
-    ssn:observes ext:RelativeHumidity ;
-    ssn:hasMeasurementCapability [
-        a ssn:MeasurementCapability ;
-        ssn:forProperty ext:RelativeHumidity ;
-        ssn:hasMeasurementProperty [
-            a qudt:Unit ;
-            ssn:hasValue [
-                a qudt:Quantity ;
-                ssn:hasValue qudt-unit:Percent ;
-            ] ;
-        ] ;
-    ] .
-    
-    
-<http://${DOMAIN}/${SYSTEM_PATH}/topic=${DEVICE_HASH}> a ssncom:CommunicationEndpoint ;
-	ssncom:topic "${DEVICE_HASH}"^^xsd:string ;
-    ssncom:protocol "WAMP" .
+<{{ru.semiot.platform.systems.uriprefix}}/{{ru.semiot.platform.device.id}}> a ssn:System, proto:Individual ;
+    rdfs:label "DHT 22 Station / {{ru.semiot.platform.device.id}}"@en ;
+    proto:hasPrototype ws:DHT22Device ;
+    ssn:hasSubSystem <{{ru.semiot.platform.systems.uriprefix}}/{{ru.semiot.platform.device.id}}/{{ru.semiot.platform.subsystem.path}}/{{ru.semiot.platform.device.id}}-temperature> ;
+    ssn:hasSubSystem <{{ru.semiot.platform.systems.uriprefix}}/{{ru.semiot.platform.device.id}}/{{ru.semiot.platform.subsystem.path}}/{{ru.semiot.platform.device.id}}-humidity> ;
+    dcterms:identifier "{{ru.semiot.platform.device.id}}"^^xsd:string ;
+    geo:location [
+        a schema:Place ;
+        schema:branchCode "{{ru.semiot.platform.drivers.dht22.room}}"^^xsd:integer ;
+        rdfs:label "Flat {{ru.semiot.platform.drivers.dht22.room}}" ;
+    ] ;
+    .
+
+<{{ru.semiot.platform.systems.uriprefix}}/{{ru.semiot.platform.device.id}}/{{ru.semiot.platform.subsystem.path}}/{{ru.semiot.platform.device.id}}-temperature>
+    a ssn:SensingDevice, proto:Individual ;
+    proto:hasPrototype ws:DHT22Device-TemperatureSensor ;
+    semiot:isSubSystemOf <{{ru.semiot.platform.systems.uriprefix}}/{{ru.semiot.platform.device.id}}> ;
+    dcterms:identifier "{{ru.semiot.platform.device.id}}-temperature"^^xsd:string ;
+    .
+
+<{{ru.semiot.platform.systems.uriprefix}}/{{ru.semiot.platform.device.id}}/{{ru.semiot.platform.subsystem.path}}/{{ru.semiot.platform.device.id}}-humidity>
+    a ssn:SensingDevice, proto:Individual ;
+    proto:hasPrototype ws:DHT22Device-HumiditySensor ;
+    semiot:isSubSystemOf <{{ru.semiot.platform.systems.uriprefix}}/{{ru.semiot.platform.device.id}}> ;
+    dcterms:identifier "{{ru.semiot.platform.device.id}}-humidity"^^xsd:string ;
+    .

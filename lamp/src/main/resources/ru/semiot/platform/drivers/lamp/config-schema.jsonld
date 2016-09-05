@@ -1,0 +1,20 @@
+{
+  "@context": {
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "dtype": "http://www.linkedmodel.org/schema/dtype#",
+    "semiot": "http://w3id.org/semiot/ontologies/semiot#"
+  },
+  "@type": "semiot:DriverConfigurationSchema",
+  "semiot:driverPid": "ru.semiot.platform.drivers.lamp",
+  "semiot:view": [
+    {
+      "@type": "semiot:CommonSchema",
+      "ru.semiot.platform.drivers.COAPEndpoint": {
+        "@type": "xsd:anyURI",
+        "rdfs:label": "COAP Endpoint",
+        "dtype:defaultValue": "coap://77.234.203.218:5683"
+      }
+    }
+  ]
+}
