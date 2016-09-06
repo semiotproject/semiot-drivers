@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.WebLink;
+import org.eclipse.californium.core.network.CoapEndpoint;
+import org.eclipse.californium.core.network.EndpointManager;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
 import org.slf4j.Logger;
@@ -134,6 +136,7 @@ public class DeviceDriverImpl implements ControllableDeviceDriver, ManagedServic
     Configuration config = new Configuration();
     try {
       String uri = cfg.getAsString(Keys.COAP_ENDPOINT);
+      int clientPort = cfg.getAsInteger(Keys.COAP_CLIENT_PORT);
       if (uri == null) {
         logger.error("Bad common configuration! Field '{}' is null!", Keys.COAP_ENDPOINT);
         throw new ConfigurationException(Keys.COAP_ENDPOINT,
@@ -142,6 +145,7 @@ public class DeviceDriverImpl implements ControllableDeviceDriver, ManagedServic
       if (uri.endsWith("/")) {
         uri = uri.substring(0, uri.length() - 1);
       }
+      EndpointManager.getEndpointManager().setDefaultEndpoint(new CoapEndpoint(clientPort));
       if (!new CoapClient(uri).ping()) {
         logger.error("Bad repeatable configuration! Cannot connect with uri '{}'", uri);
         throw new ConfigurationException(Keys.COAP_ENDPOINT,
