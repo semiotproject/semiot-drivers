@@ -81,7 +81,8 @@ public class DriverUtils {
     return obs;
   }
 
-  public static void getAndPublishObservations(JSONArray observations, DeviceDriverManager manager, Map<String, Device> map) {
+  public static void getAndPublishObservations(JSONArray observations, DeviceDriverManager manager,
+      Map<String, Device> map) {
 
     for (int i = 0; i < observations.length(); i++) {
       try {
@@ -93,7 +94,7 @@ public class DriverUtils {
         String timestamp = Long.toString(System.currentTimeMillis());
         manager.registerObservation(map.get(id), new TemperatureObservation(id, timestamp, value));
       } catch (JSONException ex) {
-        logger.warn("Can't read data from observations, bad json! Exception message is {}", ex.getMessage());
+        logger.warn("Can't read data from observations, bad json!", ex);
       }
     }
   }

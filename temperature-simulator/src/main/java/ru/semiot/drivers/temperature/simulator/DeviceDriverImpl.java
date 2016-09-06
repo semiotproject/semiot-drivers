@@ -130,7 +130,7 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
         }
         logger.debug("{} devices were registered", count);
 
-        Thread.sleep(300000); // 5 seconds
+        Thread.sleep(5000); // 5 seconds
 
         logger.debug("Subscribe for observations");
         for (String building : buildings) {
@@ -144,6 +144,7 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
             public void onLoad(CoapResponse response) {
               try {
                 if (response != null) {
+                  logger.debug("[Building={}] Received not NULL response!", building);
                   DriverUtils.getAndPublishObservations(
                       new JSONArray(response.getResponseText()), manager, devicesMap);
                 } else {
@@ -159,6 +160,8 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
               logger.error("[Building={}] Can't get observation!", building);
             }
           }));
+
+          logger.debug("[Building={}] Subscribed for observations", building);
         }
       } catch (Throwable e) {
         logger.error(e.getMessage(), e);
