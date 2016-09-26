@@ -148,7 +148,7 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
                   DriverUtils.getAndPublishObservations(
                       new JSONArray(response.getResponseText()), manager, devicesMap);
                 } else {
-                  logger.error("[Building={}] Received null instead of observations", building);
+                  logger.error("[Building={}] Received NULL instead of observations", building);
                 }
               } catch (Throwable ex) {
                 logger.error(ex.getMessage(), ex);
