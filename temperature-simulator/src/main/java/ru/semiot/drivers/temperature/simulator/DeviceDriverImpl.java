@@ -145,8 +145,12 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
               try {
                 if (response != null) {
                   logger.debug("[Building={}] Received not NULL response!", building);
-                  DriverUtils.getAndPublishObservations(
-                      new JSONArray(response.getResponseText()), manager, devicesMap);
+                  if (!response.getResponseText().isEmpty()) {
+                    DriverUtils.getAndPublishObservations(new JSONArray(response.getResponseText()),
+                        manager, devicesMap);
+                  } else {
+                    logger.warn("[Building={}] Received empty instead of observations", building);
+                  }
                 } else {
                   logger.error("[Building={}] Received null instead of observations", building);
                 }
