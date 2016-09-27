@@ -83,11 +83,10 @@ public class DriverUtils {
 
   public static void getAndPublishObservations(JSONArray observations, DeviceDriverManager manager,
       Map<String, Device> map) {
+    String timestamp = Long.toString(System.currentTimeMillis());
 
     for (int i = 0; i < observations.length(); i++) {
       try {
-        String timestamp = Long.toString(System.currentTimeMillis());
-
         JSONObject object = observations.getJSONObject(i);
         // String id = hash(Keys.DRIVER_PID, Integer.toString(object.getInt(SENSOR_ID)));
         String id = Integer.toString(object.getInt(SENSOR_ID));
