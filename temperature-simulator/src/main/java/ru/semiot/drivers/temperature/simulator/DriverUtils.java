@@ -83,6 +83,7 @@ public class DriverUtils {
 
   public static void getAndPublishObservations(JSONArray observations, DeviceDriverManager manager,
       Map<String, Device> map) {
+    String timestamp = Long.toString(System.currentTimeMillis());
 
     for (int i = 0; i < observations.length(); i++) {
       try {
@@ -90,8 +91,7 @@ public class DriverUtils {
         // String id = hash(Keys.DRIVER_PID, Integer.toString(object.getInt(SENSOR_ID)));
         String id = Integer.toString(object.getInt(SENSOR_ID));
         String value = Double.toString(object.getDouble(VALUE));
-        //Using driver timestamp
-        String timestamp = Long.toString(System.currentTimeMillis());
+
         manager.registerObservation(map.get(id), new TemperatureObservation(id, timestamp, value));
       } catch (JSONException ex) {
         logger.warn("Can't read data from observations, bad json!", ex);

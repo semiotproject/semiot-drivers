@@ -2,7 +2,6 @@ package ru.semiot.drivers.temperature.simulator;
 
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapHandler;
-import org.eclipse.californium.core.CoapObserveRelation;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.WebLink;
 import org.eclipse.californium.core.network.CoapEndpoint;
@@ -51,7 +50,6 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
   private volatile DeviceDriverManager manager;
   private Configuration commonConfiguration;
   private CoapClient client;
-  private List<CoapObserveRelation> relations = new ArrayList<>();
 
   public void start() {
     try {
@@ -70,10 +68,6 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
     logger.debug("{} is stopping!", DRIVER_NAME);
     logger.debug("Try to shutdown CoapClient");
     try {
-      for (CoapObserveRelation relation : relations) {
-        relation.reactiveCancel();
-      }
-
       devicesMap.clear();
       executorService.shutdown();
       try {
@@ -133,37 +127,11 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
         Thread.sleep(5000); // 5 seconds
 
         logger.debug("Subscribe for observations");
+        CoapHandler handler = new TemperatureObservationHandler();
         for (String building : buildings) {
-          client.setURI(
-              commonConfiguration.getAsString(Keys.COAP_ENDPOINT)
-                  + "/"
-                  + building
-                  + Keys.SIMULATOR_OBSERVATION_POSTFIX);
-          relations.add(client.observeAndWait(new CoapHandler() {
-            @Override
-            public void onLoad(CoapResponse response) {
-              try {
-                if (response != null) {
-                  logger.debug("[Building={}] Received not NULL response!", building);
-                  if (!response.getResponseText().isEmpty()) {
-                    DriverUtils.getAndPublishObservations(new JSONArray(response.getResponseText()),
-                        manager, devicesMap);
-                  } else {
-                    logger.warn("[Building={}] Received empty instead of observations", building);
-                  }
-                } else {
-                  logger.error("[Building={}] Received null instead of observations", building);
-                }
-              } catch (Throwable ex) {
-                logger.error(ex.getMessage(), ex);
-              }
-            }
-
-            @Override
-            public void onError() {
-              logger.error("[Building={}] Can't get observation!", building);
-            }
-          }));
+          client.setURI(commonConfiguration.getAsString(Keys.COAP_ENDPOINT) + "/"
+              + building + Keys.SIMULATOR_OBSERVATION_POSTFIX);
+          client.observeAndWait(handler);
 
           logger.debug("[Building={}] Subscribed for observations", building);
         }
@@ -238,4 +206,29 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
     return config;
   }
 
+  private class TemperatureObservationHandler implements CoapHandler {
+
+    @Override
+    public void onLoad(CoapResponse response) {
+      try {
+        if (response != null) {
+          if (!response.getResponseText().isEmpty()) {
+            DriverUtils.getAndPublishObservations(new JSONArray(response.getResponseText()),
+                manager, devicesMap);
+          } else {
+            logger.warn("Received empty instead of observations");
+          }
+        } else {
+          logger.error("Received NULL instead of observations");
+        }
+      } catch (Throwable ex) {
+        logger.error(ex.getMessage(), ex);
+      }
+    }
+
+    @Override
+    public void onError() {
+      logger.error("Can't get observation!");
+    }
+  }
 }
