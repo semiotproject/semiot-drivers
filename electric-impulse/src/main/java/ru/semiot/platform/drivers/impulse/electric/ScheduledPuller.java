@@ -1,6 +1,7 @@
 package ru.semiot.platform.drivers.impulse.electric;
 
 import org.eclipse.californium.core.CoapClient;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,15 +12,13 @@ import org.slf4j.LoggerFactory;
 public class ScheduledPuller implements Runnable {
 
   private final static Logger logger = LoggerFactory.getLogger(
-      ScheduledPuller.class);
+          ScheduledPuller.class);
 
   private final DeviceDriverImpl driver;
   private final CoapClient client;
   private final ImpulseDevice device;
   private final double MAGIC_NUMBER = 0.3125;
   private long lastValue = -1;
-
-  private static final String TEMPLATE_MSG = "\"tick-value\":\"";
 
   public ScheduledPuller(DeviceDriverImpl driver, ImpulseDevice device) {
     this.driver = driver;
@@ -32,16 +31,18 @@ public class ScheduledPuller implements Runnable {
     try {
       logger.debug("Try to pull from {} ...", client.getURI());
       String resp = client.get().getResponseText();
-      logger.debug("Response msg is {}", resp);
-      long val = Long.parseLong(resp.substring(
-          resp.lastIndexOf(TEMPLATE_MSG) + TEMPLATE_MSG.length(),
-          resp.lastIndexOf('\"')));
+      if (resp == null || resp.isEmpty()) {
+        logger.warn("Response msg is empty!");
+        return;
+      }      
+      JSONObject json = new JSONObject(resp);
+      long val = json.optLong("@value");
       if (val != lastValue) {
         ImpulseObservation obs = new ImpulseObservation(device.getId(),
-            ImpulseObservation.TEMPLATE_SENSOR.replace("${SYSTEM_ID}", device.getId()),
-            Long.toString(System.currentTimeMillis()),
-            String.valueOf(MAGIC_NUMBER * val),
-            ImpulseObservation.TYPE);
+                ImpulseObservation.TEMPLATE_SENSOR.replace("${SYSTEM_ID}", device.getId()),
+                Long.toString(System.currentTimeMillis()),
+                String.valueOf(MAGIC_NUMBER * val),
+                ImpulseObservation.TYPE);
         lastValue = val;
         driver.publishNewObservation(obs);
       }

@@ -57,10 +57,10 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
     int count = 0;
     for (WebLink link : discover) {
       logger.debug("Link is {}", link.getURI());
-      if (link.getURI().matches("/tick\\d+")) {
+      if (link.getURI().matches("/dischargeValue")) {
         index = link.getURI();
         id = getHash(index);
-        ImpulseDevice device = new ImpulseDevice(id, URI + "/tick");
+        ImpulseDevice device = new ImpulseDevice(id, URI + "/dischargeValue");
         //ImpulseDevice device = new ImpulseDevice(id, URI + index);
         devicesMap.put(id, device);
         deviceManager.registerDevice(info, device);
