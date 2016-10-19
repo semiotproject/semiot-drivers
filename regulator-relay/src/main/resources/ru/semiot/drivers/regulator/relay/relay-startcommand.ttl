@@ -5,7 +5,7 @@
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix : <https://raw.githubusercontent.com/semiotproject/semiot-drivers/master/regulator-relay/src/main/resources/ru/semiot/drivers/regulator/relay/prototype.ttl#> .
 
-[ a semiot:StopCommand ;
+[ a semiot:StartCommand, semiot:Command ;
   dcterms:identifier "relay-startcommand" ;
   semiot:forProcess <{{ru.semiot.platform.process.uri}}> ;
   dul:associatedWith <{{ru.semiot.platform.device.uri}}>

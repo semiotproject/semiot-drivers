@@ -40,7 +40,9 @@ public class Regulator extends Device {
   public void setState(boolean state) {
     this.state = state;
     try {
+      logger.info(TEMPLATE_MSG.replace("${VAL}", state ? TURN_ON_ACTION : TURN_OFF_ACTION));
       client.put(TEMPLATE_MSG.replace("${VAL}", state ? TURN_ON_ACTION : TURN_OFF_ACTION), 0);
+      
     } catch (RuntimeException ex) {
       logger.error("Bad resource! Can't execute request! URI is {}.Exception message is {}", client.getURI(), ex.getMessage());
     }
@@ -49,9 +51,11 @@ public class Regulator extends Device {
 
   public Regulator(String id, String uri) {
     super(id);
+    logger.info(uri);
     client = new CoapClient(uri);
     try {
       String state = client.get().getResponseText();
+      logger.info(state);
       this.state = state.indexOf("TurnOn")!=-1 ? true : false;
     } catch (RuntimeException ex) {
       logger.error("Bad resource! Can't execute request! URI is {}.Exception message is {}", client.getURI(), ex.getMessage());

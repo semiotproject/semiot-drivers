@@ -1,6 +1,5 @@
 package ru.semiot.drivers.regulator.relay;
 
-import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.network.CoapEndpoint;
 import org.eclipse.californium.core.network.EndpointManager;
 import org.osgi.service.cm.ConfigurationException;
@@ -25,16 +24,16 @@ public class DeviceDriverImpl implements ControllableDeviceDriver, ManagedServic
 
   private static final Logger logger = LoggerFactory.getLogger(DeviceDriverImpl.class);
   private static final String PROTOTYPE_URI_PREFIX =
-      "https://raw.githubusercontent.com/semiotproject/semiot-drivers/" + "master/regulator-relay/"
+      "https://raw.githubusercontent.com/semiotproject/semiot-drivers/master/regulator-relay/"
           + "src/main/resources/ru/semiot/drivers/regulator/relay/prototype.ttl#";
   private static final String DRIVER_NAME = "Regulator Relay Driver";
   private Configuration commonConfiguration;
   private final Configuration configuration = new Configuration();
   private final DriverInformation info =
       new DriverInformation(Keys.DRIVER_PID, URI.create(PROTOTYPE_URI_PREFIX + "Regulator"));
-  private static final String PROCESS_CHANGE = "relay_state";
-  private static final String COMMAND_RELAY_START = "start_relay"; // ???
-  private static final String COMMAND_RELAY_STOP = "stop_relay"; // ???
+  private static final String PROCESS_CHANGE = "relay";
+  private static final String COMMAND_RELAY_START = "relay-startcommand"; // ???
+  private static final String COMMAND_RELAY_STOP = "relay-stopcommand"; // ???
   private static RDFTemplate TEMPLATE_RELAY_START_COMMAND;
   private static RDFTemplate TEMPLATE_RELAY_STOP_COMMAND;
   private static final int FNV_32_INIT = 0x811c9dc5;
@@ -61,13 +60,21 @@ public class DeviceDriverImpl implements ControllableDeviceDriver, ManagedServic
     String id = hash(Keys.DRIVER_PID, "1");
     regulator = new Regulator(id,
         commonConfiguration.getAsString(Keys.COAP_ENDPOINT) + Keys.COAP_RESOURCE_RELAY);
+    manager.registerDevice(info, regulator);
 
     Command cmd = new Command(PROCESS_CHANGE, COMMAND_RELAY_START);
     cmd.add(Keys.PROCESS_ID, PROCESS_CHANGE);
     cmd.add(Keys.DEVICE_ID, regulator.getId());
     // cmd.add(Keys.PROCESS_CHANGE_REGULATOR_PRESSURE, regulators.get(_id).getPressure());
-    manager.registerCommand(regulator,
-        new CommandResult(cmd, getRDFTemplate(COMMAND_RELAY_START), ZonedDateTime.now()));
+    
+    
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      logger.info(e.getMessage(), e);
+    }
+    /* manager.registerCommand(regulator,
+        new CommandResult(cmd, getRDFTemplate(COMMAND_RELAY_START), ZonedDateTime.now())); // поправить */
 
     logger.info("{} started!", DRIVER_NAME);
   }
@@ -168,11 +175,11 @@ public class DeviceDriverImpl implements ControllableDeviceDriver, ManagedServic
         uri = uri.substring(0, uri.length() - 1);
       }
       EndpointManager.getEndpointManager().setDefaultEndpoint(new CoapEndpoint(clientPort));
-      if (!new CoapClient(uri).ping()) {
-        logger.error("Bad repeatable configuration! Cannot connect with uri '{}'", uri);
+      /* if (!new CoapClient(uri).ping()) {
+        logger.error("Bad common configuration! Cannot connect with uri '{}'", uri);
         throw new ConfigurationException(Keys.COAP_ENDPOINT,
             "Bad common configuration. Cannot connect with uri " + uri);
-      }
+      } */
       config.put(Keys.COAP_ENDPOINT, uri);
     } catch (Throwable ex) {
       logger.error("Bad common configuration! Can not extract fields");

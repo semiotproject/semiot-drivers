@@ -17,12 +17,12 @@
 
 :Regulator-ChangeValue a semiot:Process ;  
   semiot:supportedCommand [
-  	a semiot:Command ;
+  	a semiot:StopCommand, semiot:Command ;
     dcterms:identifier "relay-stopcommand" ;
     rdfs:label "Turn off the relay"@en ;
   ] ;
   semiot:supportedCommand [
-  	a semiot:Command ;
+  	a semiot:StartCommand, semiot:Command ;
     dcterms:identifier "relay-startcommand" ;
     rdfs:label "Turn on the relay"@en ;
   ] .

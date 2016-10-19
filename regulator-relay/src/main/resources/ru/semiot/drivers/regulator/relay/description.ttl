@@ -19,5 +19,5 @@
 
 <{{ru.semiot.platform.systems.uriprefix}}/{{ru.semiot.platform.device.id}}/{{ru.semiot.platform.process.path}}/relay> a semiot:Process, proto:Individual ;
     proto:hasPrototype ws:Regulator-ChangeValue ;
-    dcterms:identifier "relay_state" ;
+    dcterms:identifier "relay" ;
     .
