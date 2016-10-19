@@ -6,19 +6,19 @@
     "semiot": "http://w3id.org/semiot/ontologies/semiot#"
   },
   "@type": "semiot:DriverConfigurationSchema",
-  "semiot:driverPid": "ru.semiot.platform.drivers.impulse.electric",
+  "semiot:driverPid": "ru.semiot.drivers.regulator-relay",
   "semiot:view": [
     {
-      "@type": "semiot:RepeatableSchema",
-      "ru.semiot.platform.drivers.COAPEndpoint": {
+      "@type": "semiot:CommonSchema",
+      "ru.semiot.drivers.COAPEndpoint": {
         "@type": "xsd:anyURI",
         "rdfs:label": "COAP Endpoint",
-        "dtype:defaultValue": "coap://192.168.0.117:5683"
+        "dtype:defaultValue": "coap://winghouse.semiot.ru:5683"
       },
-      "ru.semiot.platform.drivers.pollingInterval": {
+      "ru.semiot.drivers.COAPClientPort": {
         "@type": "xsd:integer",
-        "rdfs:label": "The polling interval (sec)",
-	"dtype:defaultValue": 20
+        "rdfs:label": "COAP Client Port",
+        "dtype:defaultValue": "5685"
       }
     }
   ]

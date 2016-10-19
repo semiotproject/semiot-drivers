@@ -32,7 +32,10 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
   private static final int FNV_32_INIT = 0x811c9dc5;
   private static final int FNV_32_PRIME = 0x01000193;
 
-  private final Configuration configuration = new Configuration();
+  private final Configuration fullConfiguration = new Configuration();
+  private List<Integer> countsRepeatableProperties;
+  private List<Configuration> repeatableConfigurations;
+  
   private final DriverInformation info
       = new DriverInformation(Keys.DRIVER_PID,
           URI.create("https://raw.githubusercontent.com/semiotproject/semiot-drivers/"
@@ -41,39 +44,27 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
   private final Map<String, ImpulseDevice> devicesMap = Collections.synchronizedMap(new HashMap<>());
 
   private volatile DeviceDriverManager deviceManager;
-  private Configuration commonConfiguration;
+  //private Configuration commonConfiguration;
   private ScheduledExecutorService scheduler;
   private List<ScheduledFuture> handles = null;
 
   public void start() {
     logger.info("{} started!", DRIVER_NAME);
     deviceManager.registerDriver(info);
-
-    Set<WebLink> discover = new CoapClient(commonConfiguration.getAsString(Keys.COAP_ENDPOINT))
-        .discover();
-    String index;
-    String URI = commonConfiguration.getAsString(Keys.COAP_ENDPOINT);
-    String id;
-    int count = 0;
-    for (WebLink link : discover) {
-      logger.debug("Link is {}", link.getURI());
-      if (link.getURI().matches("/energyValue")) {
-        index = link.getURI();
-        id = getHash(index);
-        ImpulseDevice device = new ImpulseDevice(id, URI + "/energyValue");
-        //ImpulseDevice device = new ImpulseDevice(id, URI + index);
-        devicesMap.put(id, device);
-        deviceManager.registerDevice(info, device);
-        count++;
-      }
-    }
-
     handles = new ArrayList<>();
-    this.scheduler = Executors.newScheduledThreadPool(count);
-    logger.debug("Try to start {} pullers", count);
-    for (ImpulseDevice dev : devicesMap.values()) {
-      handles.add(startPuller(dev));
+    this.scheduler = Executors.newScheduledThreadPool(repeatableConfigurations.size());
+
+    logger.debug("Try to start {} pullers", repeatableConfigurations.size());
+
+    for (Configuration cfg : repeatableConfigurations) {
+      String uri = cfg.getAsString(Keys.COAP_ENDPOINT) + "/dischargeValue";
+      String id = getHash(uri);
+      ImpulseDevice device = new ImpulseDevice(id, uri);
+      devicesMap.put(id, device);
+      deviceManager.registerDevice(info, device);
+      handles.add(startPuller(device, cfg.getAsInteger(Keys.POLLING_INTERVAL)));
     }
+
     logger.debug("All pullers started");
   }
 
@@ -95,17 +86,17 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
     logger.info("{} stopped!", DRIVER_NAME);
   }
 
-  public ScheduledFuture startPuller(ImpulseDevice dev) {
+  public ScheduledFuture startPuller(ImpulseDevice dev, int interval) {
     logger.debug("Try to start puller!");
     ScheduledPuller puller = new ScheduledPuller(this, dev);
 
-    logger.debug("Try to schedule polling with interval {} min",
-        commonConfiguration.get(Keys.POLLING_INTERVAL));
+    logger.debug("Try to schedule polling with interval {} sec",
+            interval);
 
     ScheduledFuture handle = this.scheduler.scheduleAtFixedRate(
-        puller, 0,
-        commonConfiguration.getAsLong(Keys.POLLING_INTERVAL),
-        TimeUnit.SECONDS);
+            puller, 0,
+            interval,
+            TimeUnit.SECONDS);
 
     logger.debug("Puller started!");
     return handle;
@@ -141,15 +132,17 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
   public void updated(Dictionary properties) throws ConfigurationException {
     synchronized (this) {
       if (properties != null) {
-        if (!configuration.isConfigured()) {
+        if (!fullConfiguration.isConfigured()) {
           logger.debug("Configuration got");
           try {
-            configuration.putAll(properties);
-            commonConfiguration = getCommonConfiguration(configuration);
-            configuration.setConfigured();
+            fullConfiguration.putAll(properties);
+            //commonConfiguration = getCommonConfiguration(fullConfiguration);
+            countsRepeatableProperties = getCountsRepeatableProperties(Keys.COAP_ENDPOINT);
+            repeatableConfigurations = getAllRepeatableConfigurations(countsRepeatableProperties, null);
+            fullConfiguration.setConfigured();
             logger.info("Received configuration is correct!");
           } catch (ConfigurationException ex) {
-            configuration.clear();
+            fullConfiguration.clear();
             throw ex;
           }
         } else {
@@ -199,6 +192,43 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
     }
     long longHash = h & 0xffffffffl;
     return String.valueOf(longHash);
+  }
+  
+  private List<Integer> getCountsRepeatableProperties(String propPrefix) throws ConfigurationException {
+    logger.debug("Try to get count of repeatable property \"{}\"", propPrefix);
+    List<Integer> counts = new ArrayList<>();
+    int index;
+
+    for (String key : fullConfiguration.keySet()) {
+      if (key.contains(propPrefix) && !counts.contains(
+              index = Integer.parseInt(key.substring(0, key.indexOf("." + propPrefix))))) {
+        counts.add(index);
+      }
+    }
+    if (counts.isEmpty()) {
+      logger.error("Bad repeatable configuration! Did not find a repeatable property");
+      throw new ConfigurationException(propPrefix, "Did not find a repeatable property");
+    }
+    logger.debug("Count of repeatable properties is {}", counts.size());
+    return counts;
+  }
+
+  private List<Configuration> getAllRepeatableConfigurations(List<Integer> counts, Configuration commonConfiguration) throws ConfigurationException {
+    logger.debug("Try to get repeatable configuration for each puller");
+    List<Configuration> cfgs = new ArrayList<>();
+    for (int i : counts) {
+      Configuration cfg = new Configuration();
+      logger.debug("Try to get repeatable field {}", i + Keys.COAP_ENDPOINT);
+      cfg.put(Keys.COAP_ENDPOINT, fullConfiguration.getAsString(i + "." + Keys.COAP_ENDPOINT));
+      logger.debug("Try to get repeatable field {}", i + Keys.COAP_ENDPOINT);
+      cfg.put(Keys.POLLING_INTERVAL, fullConfiguration.getAsString(i + "." + Keys.POLLING_INTERVAL));
+      //logger.debug("Count is {}, configuration is [{}]", i, cfg);
+      if (commonConfiguration != null) {
+        cfg.putAll(commonConfiguration);
+      }
+      cfgs.add(cfg);
+    }
+    return cfgs;
   }
 
 }

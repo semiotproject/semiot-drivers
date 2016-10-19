@@ -9,11 +9,11 @@
   "semiot:driverPid": "ru.semiot.platform.drivers.impulse.water",
   "semiot:view": [
     {
-      "@type": "semiot:CommonSchema",
+      "@type": "semiot:RepeatableSchema",
       "ru.semiot.platform.drivers.COAPEndpoint": {
         "@type": "xsd:anyURI",
         "rdfs:label": "COAP Endpoint",
-        "dtype:defaultValue": "coap://77.234.203.218:5683"
+        "dtype:defaultValue": "coap://192.168.0.117:5683"
       },
       "ru.semiot.platform.drivers.pollingInterval": {
         "@type": "xsd:integer",
