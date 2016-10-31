@@ -125,6 +125,8 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
     String label = systemInfo.get(JSON_KEY_LABEL).asString();
     String room = systemInfo.get(JSON_KEY_LOCATION).asObject().get(JSON_KEY_LABEL).asString();
 
+    logger.debug("id: {}, label: {}, room: {}", id, label, room);
+
     return new SEMIOTTHSDevice(label, id, room);
   }
 
@@ -142,6 +144,8 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
       type = SEMIOTTHSObservation.HUMIDITY_TYPE;
       sensorId = SEMIOTTHSObservation.HUMIDITY_TEMPLATE_SENSOR.replace("${SYSTEM_ID}", deviceId);
     }
+
+    logger.debug("deviceId: {}, sensorId: {}, value: {}", deviceId, sensorId, value);
 
     return new SEMIOTTHSObservation(deviceId, sensorId, Long.toString(System.currentTimeMillis()),
         value, type);
