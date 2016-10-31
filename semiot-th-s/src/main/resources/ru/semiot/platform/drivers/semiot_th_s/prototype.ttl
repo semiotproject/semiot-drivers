@@ -1,4 +1,4 @@
-@prefix : <https://raw.githubusercontent.com/semiotproject/semiot-drivers/master/dht22/src/main/resources/ru/semiot/platform/drivers/dht22/prototype.ttl#> .
+@prefix : <https://raw.githubusercontent.com/semiotproject/semiot-drivers/master/semiot-th-s/src/main/resources/ru/semiot/platform/drivers/semiot_th_s/prototype.ttl#> .
 @prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#> .
 @prefix qudt: <http://qudt.org/schema/qudt#> .
 @prefix qudt-quantity: <http://qudt.org/vocab/quantity#> .

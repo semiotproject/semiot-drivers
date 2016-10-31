@@ -35,7 +35,7 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
   private final DriverInformation info
       = new DriverInformation(Keys.DRIVER_PID,
       URI.create("https://raw.githubusercontent.com/semiotproject/semiot-drivers/"
-          + "master/semiot_th_s/"
+          + "master/semiot-th-s/"
           + "src/main/resources/ru/semiot/platform/drivers/semiot_th_s/prototype.ttl#SEMIOTTHSDevice"));
   private final Map<String, SEMIOTTHSDevice> devicesMap = Collections.synchronizedMap(new HashMap<>());
 
