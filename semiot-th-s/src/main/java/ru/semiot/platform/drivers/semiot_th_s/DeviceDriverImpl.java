@@ -2,6 +2,7 @@ package ru.semiot.platform.drivers.semiot_th_s;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
+import com.eclipsesource.json.JsonValue;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.core.server.resources.CoapExchange;
@@ -47,9 +48,10 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
     deviceManager.registerDriver(info);
 
     int endpointPort = configuration.getAsInteger(Keys.COAP_ENDPOINT_PORT);
-    coapServer = new CoapServer(endpointPort);
-    coapServer.add(new CoapResource("test") {
+    String path = configuration.getAsString(Keys.LISTEN_ON_PATH);
 
+    coapServer = new CoapServer(endpointPort);
+    coapServer.add(new CoapResource(path) {
       @Override
       public void handlePOST(CoapExchange exchange) {
         logger.debug("Received request!");
@@ -57,11 +59,18 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
 
         if (payload != null) {
           SEMIOTTHSDevice device = parseDeviceInformation(payload);
-          if (devicesMap.containsKey(device.getId())) {
-            //TODO: Update device info
-          } else {
-            deviceManager.registerDevice(info, device);
-            devicesMap.put(device.getId(), device);
+
+          synchronized (this) {
+            if (devicesMap.containsKey(device.getId())) {
+              if (!devicesMap.get(device.getId()).equals(device)) {
+                //Device metadata was updated, so updating it
+                devicesMap.put(device.getId(), device);
+                deviceManager.updateDevice(info, device);
+              }
+            } else {
+              deviceManager.registerDevice(info, device);
+              devicesMap.put(device.getId(), device);
+            }
           }
 
           SEMIOTTHSObservation observation = parseObservation(payload);
@@ -134,7 +143,7 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
     JsonObject object = Json.parse(payload).asObject();
     String deviceId = object.get(JSON_KEY_SYSTEM_INFO).asObject().get(JSON_KEY_IDENTIFIER).asString();
     String type = object.get(JSON_KEY_TYPE).asString();
-    String value = object.get(JSON_KEY_VALUE).asString();
+    String value = doubleToString(object.get(JSON_KEY_VALUE));
     String sensorId;
 
     if (type.equalsIgnoreCase("doc:TemperatureValue")) {
@@ -149,6 +158,16 @@ public class DeviceDriverImpl implements DeviceDriver, ManagedService {
 
     return new SEMIOTTHSObservation(deviceId, sensorId, Long.toString(System.currentTimeMillis()),
         value, type);
+  }
+
+  private String doubleToString(JsonValue value) {
+    if (value.isString()) {
+      return value.asString();
+    } else if (value.isNumber()) {
+      return String.valueOf(value.asDouble());
+    } else {
+      throw new IllegalArgumentException("{} is not String and Number!");
+    }
   }
 
 }

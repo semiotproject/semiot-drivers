@@ -14,6 +14,11 @@
         "@type": "xsd:integer",
         "rdfs:label": "CoAP Endpoint Port",
 	    "dtype:defaultValue": 5683
+      },
+      "ru.semiot.platform.drivers.listenPath": {
+        "@type": "xsd:string",
+        "rdfs:label": "Listen on path",
+        "dtype:defaultValue": "data"
       }
     }
   ]
